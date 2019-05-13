@@ -34,6 +34,27 @@ HEADERS += \
 FORMS += \
         mainwindow.ui
 
+
+# MYNT® EYE D
+
+win32 {
+    SDK_ROOT = "$$(MYNTEYED_SDK_ROOT)"
+    isEmpty(SDK_ROOT) {
+        error( "MYNTEYED_SDK_ROOT not found, please install SDK firstly" )
+    }
+    message("SDK_ROOT: $$SDK_ROOT")
+
+    INCLUDEPATH += "$$SDK_ROOT/include"
+    LIBS += "$$SDK_ROOT/lib/mynteye_depth.lib"
+}
+
+unix {
+    INCLUDEPATH += /usr/local/include
+    LIBS += -L/usr/local/lib -lmynteye_depth
+}
+
+
+
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
