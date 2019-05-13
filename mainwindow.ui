@@ -49,17 +49,35 @@
      <attribute name="title">
       <string>UWB</string>
      </attribute>
-     <widget class="QComboBox" name="comboBox">
+     <widget class="QComboBox" name="comboxBox_portName">
       <property name="geometry">
        <rect>
         <x>110</x>
         <y>10</y>
-        <width>131</width>
-        <height>25</height>
+        <width>84</width>
+        <height>23</height>
        </rect>
       </property>
+      <property name="mouseTracking">
+       <bool>true</bool>
+      </property>
+      <property name="tabletTracking">
+       <bool>false</bool>
+      </property>
+      <property name="contextMenuPolicy">
+       <enum>Qt::ActionsContextMenu</enum>
+      </property>
+      <property name="editable">
+       <bool>false</bool>
+      </property>
+      <property name="insertPolicy">
+       <enum>QComboBox::InsertAtTop</enum>
+      </property>
+      <property name="frame">
+       <bool>true</bool>
+      </property>
      </widget>
-     <widget class="QComboBox" name="comboBox_2">
+     <widget class="QComboBox" name="comboBox_band">
       <property name="geometry">
        <rect>
         <x>110</x>
@@ -68,6 +86,11 @@
         <height>25</height>
        </rect>
       </property>
+      <item>
+       <property name="text">
+        <string>921600</string>
+       </property>
+      </item>
      </widget>
      <widget class="QComboBox" name="comboBox_3">
       <property name="geometry">
@@ -78,8 +101,13 @@
         <height>25</height>
        </rect>
       </property>
+      <item>
+       <property name="text">
+        <string>HEAD_UWB</string>
+       </property>
+      </item>
      </widget>
-     <widget class="QPushButton" name="pushButton">
+     <widget class="QPushButton" name="btn_start_serial">
       <property name="geometry">
        <rect>
         <x>10</x>
@@ -92,7 +120,7 @@
        <string>Start</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="pushButton_2">
+     <widget class="QPushButton" name="btn_stop_serial">
       <property name="geometry">
        <rect>
         <x>120</x>
@@ -147,11 +175,24 @@
      <widget class="QTextBrowser" name="textBrowser">
       <property name="geometry">
        <rect>
-        <x>320</x>
-        <y>20</y>
+        <x>350</x>
+        <y>10</y>
         <width>851</width>
-        <height>121</height>
+        <height>141</height>
        </rect>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="pushButton_3">
+      <property name="geometry">
+       <rect>
+        <x>230</x>
+        <y>10</y>
+        <width>89</width>
+        <height>25</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Refresh</string>
       </property>
      </widget>
     </widget>
