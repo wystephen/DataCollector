@@ -3,12 +3,22 @@
 
 #include <QMainWindow>
 
+#include <QHBoxLayout>
+#include <QInputDialog>
+#include <QPainter>
+#include <QTimer>
+
 #include <QMessageBox>
 
 #include <QtSerialPort/QSerialPort>
 #include <QtSerialPort/QSerialPortInfo>
 
 #include <thread>
+
+#include <mynteyed/camera.h>
+#include <mynteyed/utils.h>
+
+MYNTEYE_USE_NAMESPACE
 
 namespace Ui {
 class MainWindow;
@@ -31,15 +41,10 @@ private slots:
 
     void on_actionMYNTD_triggered();
 
-    void on_comboBox_activated(const QString &arg1);
-
-    void on_PortCombo_highlighted(const QString &arg1);
-
-    void on_PortCombo_activated(int index);
 
     void on_comboBox_band_currentIndexChanged(const QString &arg1);
 
-    void on_comboxBox_portName_highlighted(const QString &arg1);
+//    void on_comboxBox_portName_highlighted(const QString &arg1);
 
     void on_pushButton_3_clicked();
 
@@ -47,10 +52,19 @@ private slots:
 
     void on_btn_start_serial_clicked(bool checked);
 
+    void handleReadyRead();
+
+    void on_btn_stop_serial_clicked();
+
 private:
     Ui::MainWindow *ui;
     QSerialPort serial_port_;
     QSerialPortInfo serial_info_;
+
+    MYNTEYE_NAMESPACE::Camera mynt_cam_;
+
+
+    bool selectDevice(DeviceInfo *dev_info);
 };
 
 #endif // MAINWINDOW_H

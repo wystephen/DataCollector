@@ -91,6 +91,11 @@
         <string>921600</string>
        </property>
       </item>
+      <item>
+       <property name="text">
+        <string>115200</string>
+       </property>
+      </item>
      </widget>
      <widget class="QComboBox" name="comboBox_3">
       <property name="geometry">
@@ -172,7 +177,7 @@
        <string>DeviceName</string>
       </property>
      </widget>
-     <widget class="QTextBrowser" name="textBrowser">
+     <widget class="QTextBrowser" name="text_browser">
       <property name="geometry">
        <rect>
         <x>350</x>

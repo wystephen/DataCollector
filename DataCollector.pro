@@ -26,10 +26,12 @@ CONFIG += c++11
 
 SOURCES += \
         main.cpp \
-        mainwindow.cpp
+        mainwindow.cpp \
+        serialbuffer.cpp
 
 HEADERS += \
-        mainwindow.h
+        mainwindow.h \
+        serialbuffer.h
 
 FORMS += \
         mainwindow.ui
