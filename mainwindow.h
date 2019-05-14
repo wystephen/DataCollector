@@ -56,6 +56,7 @@ private slots:
 
     void on_btn_stop_serial_clicked();
 
+    void checkSerialStatu();
 
     void processStream();
 
@@ -63,6 +64,8 @@ private:
     Ui::MainWindow *ui;
     QSerialPort serial_port_;
     QSerialPortInfo serial_info_;
+
+    QTimer *serial_timer_;
 
     MYNTEYE_NAMESPACE::Camera mynt_cam_;
 
@@ -81,6 +84,14 @@ private:
     bool selectDevice(DeviceInfo *dev_info);
 
     bool setupDrawImage();
+
+    bool drawImuInfo(double acc_x,
+                     double acc_y,
+                     double acc_z,
+                     double gyr_x,
+                     double gyr_y,
+                     double gyr_z,
+                     double temp);
 
 
 };

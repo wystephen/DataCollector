@@ -119,6 +119,11 @@ void MainWindow::on_btn_start_serial_clicked(bool checked)
                     this,&MainWindow::handleReadyRead);
             ui->btn_start_serial->setEnabled(false);
             ui->btn_stop_serial->setEnabled(true);
+            serial_timer_ = new QTimer(this);
+//            serial_timer_->setInterval(100);
+            connect(serial_timer_,SIGNAL(timeout()),
+                    this, SLOT(checkSerialStatu()));
+            serial_timer_->start(100);
         }else{
             QMessageBox::information(
                         nullptr,
@@ -128,10 +133,24 @@ void MainWindow::on_btn_start_serial_clicked(bool checked)
     }
 }
 
+void MainWindow::checkSerialStatu(){
+    if(!(serial_port_.isOpen())){
+        QMessageBox::information(
+                    nullptr,
+                    "Serial port error",
+                    "serial port maybe blocked");
+
+    }
+}
+
 void MainWindow::on_btn_stop_serial_clicked()
 {
     serial_port_.close();
     ui->btn_start_serial->setEnabled(true);
+    if(serial_timer_){
+        serial_timer_->stop();
+        delete serial_timer_;
+    }
 }
 
 /**
@@ -140,9 +159,15 @@ void MainWindow::on_btn_stop_serial_clicked()
  */
 void MainWindow::handleReadyRead(){
     char* data_buf = new char[1000];
-    serial_port_.readLine(data_buf,1000);
-    QString line_data(data_buf);
-    ui->text_browser->append(line_data);
+    auto len = serial_port_.readLine(data_buf,1000);
+    if(len>0 && len<1000){
+        QString line_data(data_buf);
+    //    ui->text_browser->clear();
+//        ui->text_browser->append(line_data);
+//	    ui->text_browser->setText(line_data);
+        ui->serial_label->setText(line_data);
+
+    }
 }
 
 
@@ -156,6 +181,7 @@ bool MainWindow::selectDevice(DeviceInfo *dev_info){
                    tr("No MYNT@ EYE Depth Camera detected"),
                       QMessageBox::Ok
                       );
+
        return false;
    }else{
        if (n == 1) {
@@ -187,7 +213,10 @@ bool MainWindow::selectDevice(DeviceInfo *dev_info){
    }
    return false;
 }
-
+/**
+ * @brief MainWindow::setupDrawImage
+ * @return
+ */
 bool MainWindow::setupDrawImage(){
     left_enabled_ = mynt_cam_.IsStreamDataEnabled(ImageType::IMAGE_LEFT_COLOR);
     right_enabled_ = mynt_cam_.IsStreamDataEnabled(ImageType::IMAGE_RIGHT_COLOR);
@@ -200,7 +229,7 @@ bool MainWindow::setupDrawImage(){
     layout->setSpacing(0);
     layout->setSizeConstraint(QLayout::SetFixedSize);
 
-    int width = widget->width() /4;
+    int width = widget->width() /3;
     int height = widget->height();
 
     if (left_enabled_) {
@@ -228,16 +257,111 @@ bool MainWindow::setupDrawImage(){
     cam_timer_->start(1000/200);
 }
 
-
+/**
+ * @brief MainWindow::processStream
+ * run by timer  (at 100hz).
+ * recieve mynt depth camera image and motion data.
+ */
 void MainWindow::processStream(){
+    mynt_cam_.HasStreamDataEnabled();
+    bool left_ok(false),right_ok(false),depth_ok(false);
     if(left_enabled_){
-        auto && left_img = mynt_cam_.GetStreamData(ImageType::IMAGE_LEFT_COLOR);
-        if(left_img.img){
-            auto &&img = left_img.img->To(ImageFormat::COLOR_RGB);
+        auto && left = mynt_cam_.GetStreamData(ImageType::IMAGE_LEFT_COLOR);
+        if(left.img){
+            left_ok = true;
+            auto &&img = left.img->To(ImageFormat::COLOR_RGB);
             QImage image(img->data(),img->width(),img->height(),
                          QImage::Format_RGB888);
             QImage small_image = image.scaledToWidth(left_label_->width());
             left_label_->setPixmap(QPixmap::fromImage(small_image));
         }
     }
+    if(right_enabled_){
+        auto &&right = mynt_cam_.GetStreamData(ImageType::IMAGE_RIGHT_COLOR);
+        if(right.img){
+            right_ok = true;
+            auto &&img=right.img->To(ImageFormat::COLOR_RGB);
+            QImage image(img->data(),img->width(),img->height(),
+                         QImage::Format_RGB888);
+            QImage small_img = image.scaledToWidth(right_label_->width());
+            right_label_->setPixmap(QPixmap::fromImage(small_img));
+        }
+    }
+    if(depth_enabled_){
+        auto && depth = mynt_cam_.GetStreamData(ImageType::IMAGE_DEPTH);
+        if(depth.img){
+            depth_ok = true;
+            auto &&img = depth.img->To(ImageFormat::COLOR_RGB);
+            QImage image(img->data(),img->width(),img->height(),
+                         QImage::Format_RGB888);
+            QImage small_img = image.scaledToWidth(right_label_->width());
+            depth_label_->setPixmap(QPixmap::fromImage(small_img));
+        }
+    }
+
+    if(mynt_cam_.IsMotionDatasEnabled()
+            && left_ok
+            && right_ok){
+        auto &&datas = mynt_cam_.GetMotionDatas();
+        if(!datas.empty()){
+
+            std::shared_ptr<ImuData> accel = nullptr;
+            std::shared_ptr<ImuData> gyro = nullptr;
+            for (auto &&data : datas) {
+                if (!data.imu) continue;
+
+                if (data.imu->flag == MYNTEYE_IMU_ACCEL && !accel) {
+                    accel = data.imu;
+                } else if (data.imu->flag == MYNTEYE_IMU_GYRO && !gyro) {
+                    gyro = data.imu;
+                } else {
+                    continue;
+                }
+
+                if (accel && gyro) break;
+
+            }
+            if(accel && gyro){
+                drawImuInfo(
+                        accel->accel[0],
+                        accel->accel[1],
+                        accel->accel[2],
+                        gyro->gyro[0],
+                        gyro->gyro[1],
+                        gyro->gyro[2],
+                        accel->timestamp);
+            }
+        }
+    }
 }
+
+/**
+ * @brief MainWindow::drawImuInfo display data in the label.
+ * @param acc_x
+ * @param acc_y
+ * @param acc_z
+ * @param gyr_x
+ * @param gyr_y
+ * @param gyr_z
+ * @param temp
+ * @return
+ */
+bool MainWindow::drawImuInfo(double acc_x,
+                             double acc_y,
+                             double acc_z,
+                             double gyr_x,
+                             double gyr_y,
+                             double gyr_z,
+                             double temp){
+    QString s = QString("[acc: %1,%2,%3]\n[gyr:%4,%5,%6]\ntemp:%7")
+            .arg(QString::number(acc_x,'f',10))
+            .arg(QString::number(acc_y,'f',10))
+            .arg(QString::number(acc_z,'f',10))
+            .arg(QString::number(gyr_x,'f',10))
+            .arg(QString::number(gyr_y,'f',10))
+            .arg(QString::number(gyr_z,'f',10))
+            .arg(QString::number(temp,'f',20));
+    ui->imu_info_label->setText(s);
+
+}
+
