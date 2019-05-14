@@ -20,6 +20,8 @@
 #include <mynteyed/camera.h>
 #include <mynteyed/utils.h>
 
+#include <datasetwriter.h>
+
 MYNTEYE_USE_NAMESPACE
 
 namespace Ui {
@@ -88,6 +90,7 @@ private slots:
   /// FILE SAVE
   QString save_dir = "";
   bool saving_flag = false;
+  DatasetWriter *writer_ptr_;
 
   bool selectDevice(DeviceInfo *dev_info);
 

@@ -7,7 +7,7 @@
 #include <deque>
 #include <vector>
 
-struct ImuData {
+struct ImuDataBlock {
   double acc[3];
   double gyr[3];
   double time_stamp;
@@ -28,6 +28,15 @@ class DatasetWriter {
 public:
   DatasetWriter(std::string dir_name);
 
+  bool RecordAccData(double acc_x,
+                double acc_y,
+                double acc_z,
+                double time_stamp);
+  bool RecordGyrData(double gyr_x,
+                double gyr_y,
+                double gyr_z,
+                double time_stamp);
+
   std::string father_dir;
 
   std::string left_img_dir;
@@ -38,8 +47,14 @@ public:
 
   std::ofstream imu_file;
 
-  std::deque<ImuData> imu_buf_vec;
+  std::deque<ImuDataBlock> imu_buf_vec;
   std::deque<ImageInfo> img_info_vec;
+
+  inline bool IsValid(){
+      return status;
+  }
+
+  bool status = false;
 };
 
 #endif // DATASETWRITER_H
