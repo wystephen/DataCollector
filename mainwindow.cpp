@@ -10,12 +10,14 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    ui->btn_stop_serial->setEnabled(false);
 }
 
 MainWindow::~MainWindow()
 {
 //    serial_port_.close();
     delete ui;
+
 }
 
 void MainWindow::on_comboBox_currentTextChanged(const QString &arg1)
@@ -140,18 +142,35 @@ void MainWindow::checkSerialStatu(){
                     "Serial port error",
                     "serial port maybe blocked");
 
+    }else{
+        char* data_buf = new char[1000];
+        auto len = serial_port_.readLine(data_buf,1000);
+        if(len>0 ){
+            QString line_data(data_buf);
+        //    ui->text_browser->clear();
+    //        ui->text_browser->append(line_data);
+    //	    ui->text_browser->setText(line_data);
+            ui->serial_label->setText(line_data);
+            std::cout << "timer block recieved data:" << data_buf << std::endl;
+
+        }
     }
 }
 
 void MainWindow::on_btn_stop_serial_clicked()
 {
-    serial_port_.close();
+    if(serial_port_.isOpen()){
+        serial_port_.close();
+    }
     ui->btn_start_serial->setEnabled(true);
+    ui->btn_stop_serial->setEnabled(false);
     if(serial_timer_){
         serial_timer_->stop();
         delete serial_timer_;
     }
+
 }
+
 
 /**
  * @brief MainWindow::handleReadyRead
@@ -166,7 +185,10 @@ void MainWindow::handleReadyRead(){
 //        ui->text_browser->append(line_data);
 //	    ui->text_browser->setText(line_data);
         ui->serial_label->setText(line_data);
+        std::cout << "recieved data:" << data_buf << std::endl;
 
+    }else{
+        std::cout << "some error happend" << std::endl;
     }
 }
 
@@ -254,7 +276,7 @@ bool MainWindow::setupDrawImage(){
     cam_timer_ = new QTimer(this);
     connect(cam_timer_, SIGNAL(timeout()),
             this, SLOT(processStream()));
-    cam_timer_->start(1000/200);
+    cam_timer_->start(1000/20);
 }
 
 /**

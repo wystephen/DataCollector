@@ -65,7 +65,7 @@ private:
     QSerialPort serial_port_;
     QSerialPortInfo serial_info_;
 
-    QTimer *serial_timer_;
+    QTimer *serial_timer_ = nullptr;
 
     MYNTEYE_NAMESPACE::Camera mynt_cam_;
 
