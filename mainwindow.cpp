@@ -45,11 +45,26 @@ void MainWindow::on_actionMYNTD_triggered()
         cam_params.framerate=30;
         cam_params.stream_mode = StreamMode::STREAM_2560x720;
 
+        cam_params.color_mode = ColorMode::COLOR_RAW;
+//        cam_params.depth_mode = DepthMode::DEPTH_RAW;
+        cam_params.depth_mode = DepthMode::DEPTH_COLORFUL;
+
+//        cam_params.ir_depth_only = true;
+
         cam_params.ir_intensity = 0;//close IR
 
         mynt_cam_.EnableMotionDatas();
         mynt_cam_.Open(cam_params);
 
+        if(mynt_cam_.IsOpened()){
+
+            // save sensor parameters.
+
+            //TODO: here
+            // start display
+            setupDrawImage();
+
+        }
 
     }
 
@@ -171,4 +186,58 @@ bool MainWindow::selectDevice(DeviceInfo *dev_info){
 
    }
    return false;
+}
+
+bool MainWindow::setupDrawImage(){
+    left_enabled_ = mynt_cam_.IsStreamDataEnabled(ImageType::IMAGE_LEFT_COLOR);
+    right_enabled_ = mynt_cam_.IsStreamDataEnabled(ImageType::IMAGE_RIGHT_COLOR);
+    depth_enabled_ = mynt_cam_.IsStreamDataEnabled(ImageType::IMAGE_DEPTH);
+
+    QWidget *widget = ui->camWidget;
+    QGridLayout *layout = new QGridLayout(widget);
+
+    layout->setMargin(0);
+    layout->setSpacing(0);
+    layout->setSizeConstraint(QLayout::SetFixedSize);
+
+    int width = widget->width() /4;
+    int height = widget->height();
+
+    if (left_enabled_) {
+        left_label_ = new QLabel(widget);
+        left_label_->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+        left_label_->setFixedSize(width, height);
+        layout->addWidget(left_label_, 0, 0);
+    }
+    if (right_enabled_) {
+        right_label_= new QLabel(widget);
+        right_label_->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+        right_label_->setFixedSize(width, height);
+        layout->addWidget(right_label_, 0, 1);
+    }
+    if (depth_enabled_) {
+        depth_label_ = new QLabel(widget);
+        depth_label_->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+        depth_label_->setFixedSize(width, height);
+        layout->addWidget(depth_label_, 0, 2);
+    }
+
+    cam_timer_ = new QTimer(this);
+    connect(cam_timer_, SIGNAL(timeout()),
+            this, SLOT(processStream()));
+    cam_timer_->start(1000/200);
+}
+
+
+void MainWindow::processStream(){
+    if(left_enabled_){
+        auto && left_img = mynt_cam_.GetStreamData(ImageType::IMAGE_LEFT_COLOR);
+        if(left_img.img){
+            auto &&img = left_img.img->To(ImageFormat::COLOR_RGB);
+            QImage image(img->data(),img->width(),img->height(),
+                         QImage::Format_RGB888);
+            QImage small_image = image.scaledToWidth(left_label_->width());
+            left_label_->setPixmap(QPixmap::fromImage(small_image));
+        }
+    }
 }

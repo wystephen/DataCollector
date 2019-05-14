@@ -56,6 +56,9 @@ private slots:
 
     void on_btn_stop_serial_clicked();
 
+
+    void processStream();
+
 private:
     Ui::MainWindow *ui;
     QSerialPort serial_port_;
@@ -63,8 +66,23 @@ private:
 
     MYNTEYE_NAMESPACE::Camera mynt_cam_;
 
+    bool left_enabled_=false;
+    bool right_enabled_=false;
+    bool depth_enabled_=false;
+
+    QLabel *left_label_;
+    QLabel *right_label_;
+    QLabel *depth_label_;
+    QLabel *info_label_;
+
+    QTimer *cam_timer_;
+
 
     bool selectDevice(DeviceInfo *dev_info);
+
+    bool setupDrawImage();
+
+
 };
 
 #endif // MAINWINDOW_H
