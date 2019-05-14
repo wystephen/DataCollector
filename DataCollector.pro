@@ -25,11 +25,13 @@ DEFINES += QT_DEPRECATED_WARNINGS
 CONFIG += c++11
 
 SOURCES += \
+        datasetwriter.cpp \
         main.cpp \
         mainwindow.cpp \
         serialbuffer.cpp
 
 HEADERS += \
+        datasetwriter.h \
         mainwindow.h \
         serialbuffer.h
 

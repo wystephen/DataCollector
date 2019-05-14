@@ -48,13 +48,15 @@ void MainWindow::on_actionMYNTD_triggered()
         cam_params.stream_mode = StreamMode::STREAM_2560x720;
 
         cam_params.color_mode = ColorMode::COLOR_RAW;
-//        cam_params.depth_mode = DepthMode::DEPTH_RAW;
+//        cam_params.depth_mode = DepthMode::DEPTH_GRAY;
         cam_params.depth_mode = DepthMode::DEPTH_COLORFUL;
+
 
 //        cam_params.ir_depth_only = true;
 
         cam_params.ir_intensity = 0;//close IR
 
+        mynt_cam_.EnableImageInfo(true);
         mynt_cam_.EnableMotionDatas();
         mynt_cam_.Open(cam_params);
 
@@ -301,6 +303,7 @@ void MainWindow::processStream(){
     if(right_enabled_){
         auto &&right = mynt_cam_.GetStreamData(ImageType::IMAGE_RIGHT_COLOR);
         if(right.img){
+
             right_ok = true;
             auto &&img=right.img->To(ImageFormat::COLOR_RGB);
             QImage image(img->data(),img->width(),img->height(),
@@ -326,6 +329,7 @@ void MainWindow::processStream(){
             && right_ok){
         auto &&datas = mynt_cam_.GetMotionDatas();
         if(!datas.empty()){
+            std::cout<< "collected imu and gyr data:" << datas.size() << std::endl;
 
             std::shared_ptr<ImuData> accel = nullptr;
             std::shared_ptr<ImuData> gyro = nullptr;
@@ -387,3 +391,34 @@ bool MainWindow::drawImuInfo(double acc_x,
 
 }
 
+
+void MainWindow::on_actionStart_Record_triggered()
+{
+    QString curPath;
+    if(save_dir.isEmpty()){
+
+         curPath = QCoreApplication::applicationDirPath();
+    }else{
+        curPath = save_dir;
+    }
+        QString selectedDir = QFileDialog::getExistingDirectory(this,
+                                                                "select a directory",
+                                                                curPath,
+                                                                QFileDialog::ShowDirsOnly);
+        if(!selectedDir.isEmpty()){
+            save_dir = selectedDir;
+            saving_flag = true;
+            ui->save_dir_label->setLineWidth(3);
+            ui->save_dir_label->setText("SAVING TO" + save_dir);
+        }
+}
+
+void MainWindow::on_actionStop_Record_triggered()
+{
+    if(saving_flag){
+        saving_flag = false;
+        //close file handle.
+        ui->save_dir_label->setLineWidth(1);
+        ui->save_dir_label->setText("STOP SAVING");
+    }
+}
