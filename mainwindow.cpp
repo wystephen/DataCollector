@@ -359,8 +359,6 @@ void MainWindow::on_actionStart_Record_triggered() {
       this, "select a directory", curPath, QFileDialog::ShowDirsOnly);
   if (!selectedDir.isEmpty()) {
     save_dir = selectedDir;
-    saving_flag = true;
-    ui->save_dir_label->setLineWidth(3);
     QDir dir_handle(save_dir);
     QStringList dir_name_list = dir_handle.entryList(QDir::AllDirs);
     // find largest dir satisfy the (00001) format.
@@ -395,7 +393,14 @@ void MainWindow::on_actionStart_Record_triggered() {
     writer_ptr_ =
         new DatasetWriter((save_dir + "/" + sub_string + "/").toStdString());
 
-    ui->save_dir_label->setText("SAVING TO" + save_dir + "/" + sub_string);
+    if (writer_ptr_->IsValid()) {
+      saving_flag = true;
+      ui->save_dir_label->setLineWidth(3);
+      ui->save_dir_label->setText("SAVING TO" + save_dir + "/" + sub_string);
+    } else {
+      QMessageBox::warning(nullptr, "Error to saving files",
+                           "writer of dataset create failed");
+    }
   }
 }
 
