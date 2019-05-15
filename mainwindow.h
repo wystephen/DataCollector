@@ -87,6 +87,7 @@ private slots:
 
   QTimer *cam_timer_;
 
+
   /// FILE SAVE
   QString save_dir = "";
   bool saving_flag = false;

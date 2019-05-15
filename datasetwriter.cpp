@@ -19,6 +19,9 @@ DatasetWriter::DatasetWriter(std::string dir_name) {
   if (left_img_info_file.is_open() && right_img_info_file.is_open() &&
       imu_file.is_open()) {
     status = true;
+    left_img_info_file.precision(20);
+    right_img_info_file.precision(20);
+    imu_file.precision(20);
   } else {
 
     std::cout << "some file not opened"
@@ -31,5 +34,3 @@ DatasetWriter::DatasetWriter(std::string dir_name) {
               << "dir is :" << father_dir << std::endl;
   }
 }
-
-

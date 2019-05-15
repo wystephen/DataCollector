@@ -31,7 +31,7 @@ void MainWindow::on_actionMYNTD_triggered() {
   if (cam_ok) {
     OpenParams cam_params(dev_info.index);
 
-    cam_params.framerate = 30;
+    cam_params.framerate = 20;
     cam_params.stream_mode = StreamMode::STREAM_2560x720;
 
     cam_params.color_mode = ColorMode::COLOR_RAW;
@@ -253,70 +253,102 @@ bool MainWindow::setupDrawImage() {
  * recieve mynt depth camera image and motion data.
  */
 void MainWindow::processStream() {
-  mynt_cam_.HasStreamDataEnabled();
-  bool left_ok(false), right_ok(false), depth_ok(false);
-  if (left_enabled_) {
-    auto &&left = mynt_cam_.GetStreamData(ImageType::IMAGE_LEFT_COLOR);
-    if (left.img) {
-      left_ok = true;
-      auto &&img = left.img->To(ImageFormat::COLOR_RGB);
-      QImage image(img->data(), img->width(), img->height(),
-                   QImage::Format_RGB888);
-      QImage small_image = image.scaledToWidth(left_label_->width());
-      left_label_->setPixmap(QPixmap::fromImage(small_image));
+  if (mynt_cam_.HasStreamDataEnabled()) {
+    bool left_ok(false), right_ok(false), depth_ok(false);
+    if (left_enabled_) {
+      auto &&left = mynt_cam_.GetStreamData(ImageType::IMAGE_LEFT_COLOR);
+      //      left.img_info->
+      if (left.img) {
+        left_ok = true;
+        auto &&img = left.img->To(ImageFormat::COLOR_RGB);
+
+        QImage image(img->data(), img->width(), img->height(),
+                     QImage::Format_RGB888);
+        if (writer_ptr_ && writer_ptr_->IsValid() && saving_flag) {
+          QString path_str =
+              QString::fromStdString(writer_ptr_->RecordLeftImage(
+                  left.img_info->timestamp, left.img_info->exposure_time,
+                  left.img_info->frame_id));
+          image.save(path_str);
+        }
+        QImage small_image = image.scaledToWidth(left_label_->width());
+        left_label_->setPixmap(QPixmap::fromImage(small_image));
+      }
     }
-  }
-  if (right_enabled_) {
-    auto &&right = mynt_cam_.GetStreamData(ImageType::IMAGE_RIGHT_COLOR);
-    if (right.img) {
+    if (right_enabled_) {
+      auto &&right = mynt_cam_.GetStreamData(ImageType::IMAGE_RIGHT_COLOR);
+      if (right.img) {
 
-      right_ok = true;
-      auto &&img = right.img->To(ImageFormat::COLOR_RGB);
-      QImage image(img->data(), img->width(), img->height(),
-                   QImage::Format_RGB888);
-      QImage small_img = image.scaledToWidth(right_label_->width());
-      right_label_->setPixmap(QPixmap::fromImage(small_img));
-    }
-  }
-  if (depth_enabled_) {
-    auto &&depth = mynt_cam_.GetStreamData(ImageType::IMAGE_DEPTH);
-    if (depth.img) {
-      depth_ok = true;
-      auto &&img = depth.img->To(ImageFormat::COLOR_RGB);
-      QImage image(img->data(), img->width(), img->height(),
-                   QImage::Format_RGB888);
-      QImage small_img = image.scaledToWidth(right_label_->width());
-      depth_label_->setPixmap(QPixmap::fromImage(small_img));
-    }
-  }
+        right_ok = true;
+        auto &&img = right.img->To(ImageFormat::COLOR_RGB);
+        QImage image(img->data(), img->width(), img->height(),
+                     QImage::Format_RGB888);
 
-  if (mynt_cam_.IsMotionDatasEnabled() && left_ok && right_ok) {
-    auto &&datas = mynt_cam_.GetMotionDatas();
-    if (!datas.empty()) {
-      std::cout << "collected imu and gyr data:" << datas.size() << std::endl;
+        if (writer_ptr_ && writer_ptr_->IsValid() && saving_flag) {
+          QString path_str =
+              QString::fromStdString(writer_ptr_->RecordRightImage(
+                  right.img_info->timestamp, right.img_info->exposure_time,
+                  right.img_info->frame_id));
 
-      std::shared_ptr<ImuData> accel = nullptr;
-      std::shared_ptr<ImuData> gyro = nullptr;
-      for (auto &&data : datas) {
-        if (!data.imu)
-          continue;
-
-        if (data.imu->flag == MYNTEYE_IMU_ACCEL && !accel) {
-          accel = data.imu;
-        } else if (data.imu->flag == MYNTEYE_IMU_GYRO && !gyro) {
-          gyro = data.imu;
-        } else {
-          continue;
+          image.save(path_str);
         }
 
-        if (accel && gyro)
-          break;
+        QImage small_img = image.scaledToWidth(right_label_->width());
+        right_label_->setPixmap(QPixmap::fromImage(small_img));
       }
-      if (accel && gyro) {
-        drawImuInfo(accel->accel[0], accel->accel[1], accel->accel[2],
-                    gyro->gyro[0], gyro->gyro[1], gyro->gyro[2],
-                    accel->timestamp);
+    }
+    if (depth_enabled_) {
+      auto &&depth = mynt_cam_.GetStreamData(ImageType::IMAGE_DEPTH);
+      if (depth.img) {
+        depth_ok = true;
+        auto &&img = depth.img->To(ImageFormat::COLOR_RGB);
+        QImage image(img->data(), img->width(), img->height(),
+                     QImage::Format_RGB888);
+        QImage small_img = image.scaledToWidth(right_label_->width());
+        depth_label_->setPixmap(QPixmap::fromImage(small_img));
       }
+    }
+
+    if (mynt_cam_.IsMotionDatasEnabled() && left_ok && right_ok) {
+      auto &&datas = mynt_cam_.GetMotionDatas();
+      if (!datas.empty()) {
+        std::cout << "collected imu and gyr data:" << datas.size() << std::endl;
+
+        std::shared_ptr<ImuData> accel = nullptr;
+        std::shared_ptr<ImuData> gyro = nullptr;
+        for (auto &&data : datas) {
+          if (!data.imu)
+            continue;
+
+          if (data.imu->flag == MYNTEYE_IMU_ACCEL && !accel) {
+            accel = data.imu;
+            if (writer_ptr_ && writer_ptr_->IsValid() && saving_flag) {
+              writer_ptr_->RecordAccData(accel->accel[0], accel->accel[1],
+                                         accel->accel[2], accel->timestamp);
+            }
+          } else if (data.imu->flag == MYNTEYE_IMU_GYRO && !gyro) {
+            gyro = data.imu;
+            if (writer_ptr_ && writer_ptr_->IsValid() && saving_flag) {
+              writer_ptr_->RecordGyrData(gyro->gyro[0], gyro->gyro[1],
+                                         gyro->gyro[2], gyro->timestamp);
+            }
+          } else {
+            continue;
+          }
+
+          if (accel && gyro)
+            break;
+        }
+        if (accel && gyro) {
+          drawImuInfo(accel->accel[0], accel->accel[1], accel->accel[2],
+                      gyro->gyro[0], gyro->gyro[1], gyro->gyro[2],
+                      accel->timestamp);
+        }
+      }
+    }
+
+    if (writer_ptr_ && writer_ptr_->IsValid() && saving_flag) {
+      writer_ptr_->Flush();
     }
   }
 }
