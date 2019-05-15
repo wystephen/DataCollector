@@ -27,10 +27,10 @@ DatasetWriter::DatasetWriter(std::string dir_name) {
     std::cout << "some file not opened"
               << "\nleft image file:"
               << (left_img_info_file.is_open() ? "true" : "false")
-              << " dir is:" << left_img_dir << "\nright imagefile:"
+              << " dir is:" << left_img_dir.c_str() << "\nright imagefile:"
               << (right_img_info_file.is_open() ? "true" : "false")
-              << " dir is:" << right_img_dir
+              << " dir is:" << right_img_dir.c_str()
               << "\n imu       file:" << (imu_file.is_open() ? "true" : "false")
-              << "dir is :" << father_dir << std::endl;
+              << "dir is :" << father_dir.c_str() << std::endl;
   }
 }

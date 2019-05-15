@@ -43,6 +43,7 @@ public:
       left_img_info_file.close();
       right_img_info_file.close();
       imu_file.close();
+      return true;
   }
 
   bool RecordAccData(double acc_x,
@@ -74,7 +75,7 @@ public:
       char frame_id_char[100];
       sprintf(frame_id_char,"%010d",frame_id);
       std::string frame_id_str(frame_id_char);
-      left_img_info_file << frame_id_str << ","
+      left_img_info_file << frame_id_str.c_str() << ","
                          << time_stamp << ","
                          << get_time_now() << ","
                          << exporture_time << "\n";
@@ -89,7 +90,7 @@ public:
       char frame_id_char[100];
       sprintf(frame_id_char,"%010d",frame_id);
       std::string frame_id_str(frame_id_char);
-      right_img_info_file<< frame_id_str << ","
+      right_img_info_file<< frame_id_str.c_str() << ","
                          << time_stamp << ","
                          << get_time_now() << ","
                          << exporture_time << "\n";

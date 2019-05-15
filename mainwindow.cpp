@@ -31,14 +31,14 @@ void MainWindow::on_actionMYNTD_triggered() {
   if (cam_ok) {
     OpenParams cam_params(dev_info.index);
 
-    cam_params.framerate = 20;
+    cam_params.framerate = 30;
     cam_params.stream_mode = StreamMode::STREAM_2560x720;
 
     cam_params.color_mode = ColorMode::COLOR_RAW;
     //        cam_params.depth_mode = DepthMode::DEPTH_GRAY;
     cam_params.depth_mode = DepthMode::DEPTH_COLORFUL;
 
-    //        cam_params.ir_depth_only = true;
+    cam_params.ir_depth_only = false;
 
     cam_params.ir_intensity = 0; // close IR
 
@@ -122,14 +122,15 @@ void MainWindow::checkSerialStatu() {
   } else {
     char *data_buf = new char[1000];
     auto len = serial_port_.readLine(data_buf, 1000);
+        /*
     if (len > 0) {
       QString line_data(data_buf);
       //    ui->text_browser->clear();
       //        ui->text_browser->append(line_data);
       //	    ui->text_browser->setText(line_data);
-      ui->serial_label->setText(line_data);
-      std::cout << "timer block recieved data:" << data_buf << std::endl;
-    }
+//      ui->serial_label->setText(line_data);
+//      std::cout << "timer block recieved data:" << data_buf << std::endl;
+    }*/
   }
 }
 
@@ -154,11 +155,11 @@ void MainWindow::handleReadyRead() {
   auto len = serial_port_.readLine(data_buf, 1000);
   if (len > 0 && len < 1000) {
     QString line_data(data_buf);
-    //    ui->text_browser->clear();
-    //        ui->text_browser->append(line_data);
-    //	    ui->text_browser->setText(line_data);
+//        ui->text_browser->clear();
+            ui->text_browser->append(line_data);
+            ui->text_browser->setText(line_data);
     ui->serial_label->setText(line_data);
-    std::cout << "recieved data:" << data_buf << std::endl;
+//    std::cout << "recieved data:" << data_buf << std::endl;
 
   } else {
     std::cout << "some error happend" << std::endl;
@@ -243,7 +244,7 @@ bool MainWindow::setupDrawImage() {
 
   cam_timer_ = new QTimer(this);
   connect(cam_timer_, SIGNAL(timeout()), this, SLOT(processStream()));
-  cam_timer_->start(1000 / 20);
+  cam_timer_->start(5);
   return true;
 }
 
