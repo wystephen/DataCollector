@@ -28,6 +28,12 @@ class DatasetWriter {
 public:
   DatasetWriter(std::string dir_name);
 
+  bool Close(){
+      left_img_info_file.close();
+      right_img_info_file.close();
+      imu_file.close();
+  }
+
   bool RecordAccData(double acc_x,
                 double acc_y,
                 double acc_z,

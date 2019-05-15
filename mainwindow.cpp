@@ -410,5 +410,8 @@ void MainWindow::on_actionStop_Record_triggered() {
     // close file handle.
     ui->save_dir_label->setLineWidth(1);
     ui->save_dir_label->setText("STOP SAVING");
+    //
+    writer_ptr_->Close();
+    delete writer_ptr_;
   }
 }
