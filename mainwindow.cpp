@@ -57,10 +57,10 @@ void MainWindow::on_actionMYNTD_triggered() {
   }
 }
 
-//void MainWindow::on_comboBox_band_currentIndexChanged(const QString &arg1) {
-//  QString baud_rate_str = arg1;
-//  serial_port_.setBaudRate(baud_rate_str.toInt());
-//}
+void MainWindow::on_comboBox_band_currentIndexChanged(const QString &arg1) {
+  QString baud_rate_str = arg1;
+  serial_port_.setBaudRate(baud_rate_str.toInt());
+}
 
 /**
  * @brief MainWindow::on_pushButton_3_clicked
@@ -155,24 +155,25 @@ void MainWindow::on_btn_stop_serial_clicked() {
  */
 void MainWindow::handleReadyRead() {
     std::cout << "start handle ready read" << std::endl;
-  char *data_buf = new char[10000];
+    char data_buf[1000];// = new char[1000];
     while (true) {
-        memset(data_buf,10000,sizeof(char)*10000);
-      auto len = serial_port_.readLine(data_buf, 10000);
-      if (len > 0 && len < 10000) {
+//        memset(data_b/*u*/f,10000,sizeof(char)*10000);
+      auto len = serial_port_.readLine(data_buf, 1000);
+      if (len > 0 && len < 1000) {
         QString line_data(data_buf);
         //            ui->text_browser->clear();
         ui->text_browser->append(line_data);
         //    ui->text_browser->setText(line_data);
         //    ui->serial_label->setText(line_data);
-        //    std::cout << "recieved data:" << data_buf << std::endl;
+//        std::cout << "recieved data:" << data_buf << std::endl;
 
       } else {
 //        std::cout << "some error happend" << std::endl;
         break;
       }
     }
-    delete []data_buf;
+//    delete []data_buf;
+    serial_port_.clearError();
     std::cout << "end handle ready read" << std::endl;
 }
 

@@ -44,7 +44,7 @@ private slots:
 
   void on_actionMYNTD_triggered();
 
-//  void on_comboBox_band_currentIndexChanged(const QString &arg1);
+  void on_comboBox_band_currentIndexChanged(const QString &arg1);
 
   //    void on_comboxBox_portName_highlighted(const QString &arg1);
 
