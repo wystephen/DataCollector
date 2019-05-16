@@ -31,7 +31,7 @@ void MainWindow::on_actionMYNTD_triggered() {
   if (cam_ok) {
     OpenParams cam_params(dev_info.index);
 
-    cam_params.framerate = 30;
+    cam_params.framerate = 10;
     cam_params.stream_mode = StreamMode::STREAM_2560x720;
 
     cam_params.color_mode = ColorMode::COLOR_RAW;
@@ -122,15 +122,15 @@ void MainWindow::checkSerialStatu() {
   } else {
     char *data_buf = new char[1000];
     auto len = serial_port_.readLine(data_buf, 1000);
-        /*
-    if (len > 0) {
-      QString line_data(data_buf);
-      //    ui->text_browser->clear();
-      //        ui->text_browser->append(line_data);
-      //	    ui->text_browser->setText(line_data);
+    /*
+if (len > 0) {
+  QString line_data(data_buf);
+  //    ui->text_browser->clear();
+  //        ui->text_browser->append(line_data);
+  //	    ui->text_browser->setText(line_data);
 //      ui->serial_label->setText(line_data);
 //      std::cout << "timer block recieved data:" << data_buf << std::endl;
-    }*/
+}*/
   }
 }
 
@@ -155,11 +155,11 @@ void MainWindow::handleReadyRead() {
   auto len = serial_port_.readLine(data_buf, 1000);
   if (len > 0 && len < 1000) {
     QString line_data(data_buf);
-//        ui->text_browser->clear();
-            ui->text_browser->append(line_data);
-            ui->text_browser->setText(line_data);
+    //        ui->text_browser->clear();
+    ui->text_browser->append(line_data);
+    ui->text_browser->setText(line_data);
     ui->serial_label->setText(line_data);
-//    std::cout << "recieved data:" << data_buf << std::endl;
+    //    std::cout << "recieved data:" << data_buf << std::endl;
 
   } else {
     std::cout << "some error happend" << std::endl;
@@ -256,8 +256,12 @@ bool MainWindow::setupDrawImage() {
 void MainWindow::processStream() {
   if (mynt_cam_.HasStreamDataEnabled()) {
     bool left_ok(false), right_ok(false), depth_ok(false);
+    auto &&left = mynt_cam_.GetStreamData(ImageType::IMAGE_LEFT_COLOR);
+    auto &&right = mynt_cam_.GetStreamData(ImageType::IMAGE_RIGHT_COLOR);
+    auto &&depth = mynt_cam_.GetStreamData(ImageType::IMAGE_DEPTH);
+    auto &&datas = mynt_cam_.GetMotionDatas();
+
     if (left_enabled_) {
-      auto &&left = mynt_cam_.GetStreamData(ImageType::IMAGE_LEFT_COLOR);
       //      left.img_info->
       if (left.img) {
         left_ok = true;
@@ -277,7 +281,6 @@ void MainWindow::processStream() {
       }
     }
     if (right_enabled_) {
-      auto &&right = mynt_cam_.GetStreamData(ImageType::IMAGE_RIGHT_COLOR);
       if (right.img) {
 
         right_ok = true;
@@ -299,7 +302,6 @@ void MainWindow::processStream() {
       }
     }
     if (depth_enabled_) {
-      auto &&depth = mynt_cam_.GetStreamData(ImageType::IMAGE_DEPTH);
       if (depth.img) {
         depth_ok = true;
         auto &&img = depth.img->To(ImageFormat::COLOR_RGB);
@@ -310,43 +312,42 @@ void MainWindow::processStream() {
       }
     }
 
-    if (mynt_cam_.IsMotionDatasEnabled() && left_ok && right_ok) {
-      auto &&datas = mynt_cam_.GetMotionDatas();
-      if (!datas.empty()) {
-        std::cout << "collected imu and gyr data:" << datas.size() << std::endl;
+    //    if (mynt_cam_.IsMotionDatasEnabled() && left_ok && right_ok) {
+    if (!datas.empty()) {
+      std::cout << "collected imu and gyr data:" << datas.size() << std::endl;
 
-        std::shared_ptr<ImuData> accel = nullptr;
-        std::shared_ptr<ImuData> gyro = nullptr;
-        for (auto &&data : datas) {
-          if (!data.imu)
-            continue;
+      std::shared_ptr<ImuData> accel = nullptr;
+      std::shared_ptr<ImuData> gyro = nullptr;
+      for (auto &&data : datas) {
+        if (!data.imu)
+          continue;
 
-          if (data.imu->flag == MYNTEYE_IMU_ACCEL && !accel) {
-            accel = data.imu;
-            if (writer_ptr_ && writer_ptr_->IsValid() && saving_flag) {
-              writer_ptr_->RecordAccData(accel->accel[0], accel->accel[1],
-                                         accel->accel[2], accel->timestamp);
-            }
-          } else if (data.imu->flag == MYNTEYE_IMU_GYRO && !gyro) {
-            gyro = data.imu;
-            if (writer_ptr_ && writer_ptr_->IsValid() && saving_flag) {
-              writer_ptr_->RecordGyrData(gyro->gyro[0], gyro->gyro[1],
-                                         gyro->gyro[2], gyro->timestamp);
-            }
-          } else {
-            continue;
+        if (data.imu->flag == MYNTEYE_IMU_ACCEL && !accel) {
+          accel = data.imu;
+          if (writer_ptr_ && writer_ptr_->IsValid() && saving_flag) {
+            writer_ptr_->RecordAccData(accel->accel[0], accel->accel[1],
+                                       accel->accel[2], accel->timestamp);
           }
+        } else if (data.imu->flag == MYNTEYE_IMU_GYRO && !gyro) {
+          gyro = data.imu;
+          if (writer_ptr_ && writer_ptr_->IsValid() && saving_flag) {
+            writer_ptr_->RecordGyrData(gyro->gyro[0], gyro->gyro[1],
+                                       gyro->gyro[2], gyro->timestamp);
+          }
+        } else {
+          continue;
+        }
 
-          if (accel && gyro)
-            break;
-        }
-        if (accel && gyro) {
-          drawImuInfo(accel->accel[0], accel->accel[1], accel->accel[2],
-                      gyro->gyro[0], gyro->gyro[1], gyro->gyro[2],
-                      accel->timestamp);
-        }
+        if (accel && gyro)
+          break;
+      }
+      if (accel && gyro) {
+        drawImuInfo(accel->accel[0], accel->accel[1], accel->accel[2],
+                    gyro->gyro[0], gyro->gyro[1], gyro->gyro[2],
+                    accel->timestamp);
       }
     }
+    //    }
 
     if (writer_ptr_ && writer_ptr_->IsValid() && saving_flag) {
       writer_ptr_->Flush();
