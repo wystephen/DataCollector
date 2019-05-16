@@ -20,9 +20,9 @@ void MainWindow::on_comboBox_currentTextChanged(const QString &arg1) {
   QString str = arg1;
 }
 
-void MainWindow::on_pushButton_clicked() {}
+//void MainWindow::on_pushButton_clicked() {}
 
-void MainWindow::on_pushButton_2_clicked() {}
+//void MainWindow::on_pushButton_2_clicked() {}
 
 void MainWindow::on_actionMYNTD_triggered() {
   DeviceInfo dev_info;
@@ -57,10 +57,10 @@ void MainWindow::on_actionMYNTD_triggered() {
   }
 }
 
-void MainWindow::on_comboBox_band_currentIndexChanged(const QString &arg1) {
-  QString baud_rate_str = arg1;
-  serial_port_.setBaudRate(baud_rate_str.toInt());
-}
+//void MainWindow::on_comboBox_band_currentIndexChanged(const QString &arg1) {
+//  QString baud_rate_str = arg1;
+//  serial_port_.setBaudRate(baud_rate_str.toInt());
+//}
 
 /**
  * @brief MainWindow::on_pushButton_3_clicked
@@ -97,16 +97,17 @@ void MainWindow::on_btn_start_serial_clicked(bool checked) {
     serial_port_.open(QIODevice::ReadOnly);
     //        QMessageBox::information(NULL,"title", "openning serial port");
     if (serial_port_.isOpen()) {
+        serial_port_.setDataTerminalReady(true);
       //            QMessageBox::information(NULL,"title", "opened serial
       //            port");
       connect(&serial_port_, &QSerialPort::readyRead, this,
               &MainWindow::handleReadyRead);
       ui->btn_start_serial->setEnabled(false);
       ui->btn_stop_serial->setEnabled(true);
-      serial_timer_ = new QTimer(this);
+//      serial_timer_ = new QTimer(this);
       //            serial_timer_->setInterval(100);
-      connect(serial_timer_, SIGNAL(timeout()), this, SLOT(checkSerialStatu()));
-      serial_timer_->start(100);
+//      connect(serial_timer_, SIGNAL(timeout()), this, SLOT(checkSerialStatu()));
+//      serial_timer_->start(100);
     } else {
       QMessageBox::information(nullptr, "SerialPortError",
                                "UWB serial port open failed");
@@ -116,21 +117,22 @@ void MainWindow::on_btn_start_serial_clicked(bool checked) {
 
 void MainWindow::checkSerialStatu() {
   if (!(serial_port_.isOpen())) {
-    QMessageBox::information(nullptr, "Serial port error",
+    QMessageBox::information(this, "Serial port error",
                              "serial port maybe blocked");
+    std::cout << "ERROR of SERIAL PORT" << std::endl;
 
   } else {
     char *data_buf = new char[1000];
     auto len = serial_port_.readLine(data_buf, 1000);
-    /*
-if (len > 0) {
-  QString line_data(data_buf);
-  //    ui->text_browser->clear();
-  //        ui->text_browser->append(line_data);
-  //	    ui->text_browser->setText(line_data);
-//      ui->serial_label->setText(line_data);
-//      std::cout << "timer block recieved data:" << data_buf << std::endl;
-}*/
+
+    if (len > 0) {
+      QString line_data(data_buf);
+//      ui->text_browser->clear();
+      ui->text_browser->append(line_data);
+//      ui->text_browser->setText(line_data);
+      ui->serial_label->setText(line_data);
+      std::cout << "timer block recieved data:" << data_buf << std::endl;
+    }
   }
 }
 
@@ -143,6 +145,7 @@ void MainWindow::on_btn_stop_serial_clicked() {
   if (serial_timer_) {
     serial_timer_->stop();
     delete serial_timer_;
+    serial_timer_ = nullptr;
   }
 }
 
@@ -151,19 +154,26 @@ void MainWindow::on_btn_stop_serial_clicked() {
  * Read one line of UWB observation. And process it.
  */
 void MainWindow::handleReadyRead() {
-  char *data_buf = new char[1000];
-  auto len = serial_port_.readLine(data_buf, 1000);
-  if (len > 0 && len < 1000) {
-    QString line_data(data_buf);
-    //        ui->text_browser->clear();
-    ui->text_browser->append(line_data);
-    ui->text_browser->setText(line_data);
-    ui->serial_label->setText(line_data);
-    //    std::cout << "recieved data:" << data_buf << std::endl;
+    std::cout << "start handle ready read" << std::endl;
+  char *data_buf = new char[10000];
+    while (true) {
+        memset(data_buf,10000,sizeof(char)*10000);
+      auto len = serial_port_.readLine(data_buf, 10000);
+      if (len > 0 && len < 10000) {
+        QString line_data(data_buf);
+        //            ui->text_browser->clear();
+        ui->text_browser->append(line_data);
+        //    ui->text_browser->setText(line_data);
+        //    ui->serial_label->setText(line_data);
+        //    std::cout << "recieved data:" << data_buf << std::endl;
 
-  } else {
-    std::cout << "some error happend" << std::endl;
-  }
+      } else {
+//        std::cout << "some error happend" << std::endl;
+        break;
+      }
+    }
+    delete []data_buf;
+    std::cout << "end handle ready read" << std::endl;
 }
 
 bool MainWindow::selectDevice(DeviceInfo *dev_info) {
@@ -314,7 +324,8 @@ void MainWindow::processStream() {
 
     //    if (mynt_cam_.IsMotionDatasEnabled() && left_ok && right_ok) {
     if (!datas.empty()) {
-      std::cout << "collected imu and gyr data:" << datas.size() << std::endl;
+      //      std::cout << "collected imu and gyr data:" << datas.size() <<
+      //      std::endl;
 
       std::shared_ptr<ImuData> accel = nullptr;
       std::shared_ptr<ImuData> gyro = nullptr;
@@ -322,13 +333,13 @@ void MainWindow::processStream() {
         if (!data.imu)
           continue;
 
-        if (data.imu->flag == MYNTEYE_IMU_ACCEL && !accel) {
+        if (data.imu->flag == MYNTEYE_IMU_ACCEL) {
           accel = data.imu;
           if (writer_ptr_ && writer_ptr_->IsValid() && saving_flag) {
             writer_ptr_->RecordAccData(accel->accel[0], accel->accel[1],
                                        accel->accel[2], accel->timestamp);
           }
-        } else if (data.imu->flag == MYNTEYE_IMU_GYRO && !gyro) {
+        } else if (data.imu->flag == MYNTEYE_IMU_GYRO) {
           gyro = data.imu;
           if (writer_ptr_ && writer_ptr_->IsValid() && saving_flag) {
             writer_ptr_->RecordGyrData(gyro->gyro[0], gyro->gyro[1],
@@ -338,13 +349,14 @@ void MainWindow::processStream() {
           continue;
         }
 
-        if (accel && gyro)
-          break;
+        if (accel && gyro) {
+          drawImuInfo(accel->accel[0], accel->accel[1], accel->accel[2],
+                      gyro->gyro[0], gyro->gyro[1], gyro->gyro[2],
+                      accel->timestamp);
+        }
+        //          break;
       }
       if (accel && gyro) {
-        drawImuInfo(accel->accel[0], accel->accel[1], accel->accel[2],
-                    gyro->gyro[0], gyro->gyro[1], gyro->gyro[2],
-                    accel->timestamp);
       }
     }
     //    }

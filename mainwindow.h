@@ -38,13 +38,13 @@ public:
 private slots:
   void on_comboBox_currentTextChanged(const QString &arg1);
 
-  void on_pushButton_clicked();
+//  void on_pushButton_clicked();
 
-  void on_pushButton_2_clicked();
+//  void on_pushButton_2_clicked();
 
   void on_actionMYNTD_triggered();
 
-  void on_comboBox_band_currentIndexChanged(const QString &arg1);
+//  void on_comboBox_band_currentIndexChanged(const QString &arg1);
 
   //    void on_comboxBox_portName_highlighted(const QString &arg1);
 
