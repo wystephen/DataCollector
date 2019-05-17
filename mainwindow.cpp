@@ -31,7 +31,7 @@ void MainWindow::on_actionMYNTD_triggered() {
   if (cam_ok) {
     OpenParams cam_params(dev_info.index);
 
-    cam_params.framerate = 10;
+    cam_params.framerate = 20;
     cam_params.stream_mode = StreamMode::STREAM_2560x720;
 
     cam_params.color_mode = ColorMode::COLOR_RAW;
@@ -156,7 +156,7 @@ void MainWindow::on_btn_stop_serial_clicked() {
 void MainWindow::handleReadyRead() {
     std::cout << "start handle ready read" << std::endl;
     char data_buf[1000];// = new char[1000];
-    while (true) {
+    while (serial_port_.canReadLine()) {
 //        memset(data_b/*u*/f,10000,sizeof(char)*10000);
       auto len = serial_port_.readLine(data_buf, 1000);
       if (len > 0 && len < 1000) {
@@ -168,7 +168,7 @@ void MainWindow::handleReadyRead() {
 //        std::cout << "recieved data:" << data_buf << std::endl;
 
       } else {
-//        std::cout << "some error happend" << std::endl;
+        std::cout << "some error happend" << std::endl;
         break;
       }
     }
@@ -272,6 +272,23 @@ void MainWindow::processStream() {
     auto &&depth = mynt_cam_.GetStreamData(ImageType::IMAGE_DEPTH);
     auto &&datas = mynt_cam_.GetMotionDatas();
 
+    if(!left.img || !right.img
+        || !depth.img){
+//        QMessageBox::InformationBox("not read all image");
+QMessageBox::warning(this,"not readed all image","not read all");
+
+
+    }
+
+
+    auto write_image = [](QImage  img,
+                                   QString path_str){
+        img.save(path_str);
+    };
+
+
+
+
     if (left_enabled_) {
       //      left.img_info->
       if (left.img) {
@@ -285,10 +302,14 @@ void MainWindow::processStream() {
               QString::fromStdString(writer_ptr_->RecordLeftImage(
                   left.img_info->timestamp, left.img_info->exposure_time,
                   left.img_info->frame_id));
-          image.save(path_str);
+//          image.save(path_str);
+          std::thread left_thread(&write_image,image,path_str);
+          left_thread.detach();
         }
-        QImage small_image = image.scaledToWidth(left_label_->width());
-        left_label_->setPixmap(QPixmap::fromImage(small_image));
+        if(left.img_info->frame_id%3==0){
+            QImage small_image = image.scaledToWidth(left_label_->width());
+            left_label_->setPixmap(QPixmap::fromImage(small_image));
+        }
       }
     }
     if (right_enabled_) {
@@ -305,11 +326,15 @@ void MainWindow::processStream() {
                   right.img_info->timestamp, right.img_info->exposure_time,
                   right.img_info->frame_id));
 
-          image.save(path_str);
+//          image.save(path_str);
+          std::thread right_thread(write_image,image,path_str);
+          right_thread.detach();
         }
+//        if(right.img_info->frame_id%3==0){
+//            QImage small_img = image.scaledToWidth(right_label_->width());
+//            right_label_->setPixmap(QPixmap::fromImage(small_img));
 
-        QImage small_img = image.scaledToWidth(right_label_->width());
-        right_label_->setPixmap(QPixmap::fromImage(small_img));
+//        }
       }
     }
     if (depth_enabled_) {
@@ -318,8 +343,12 @@ void MainWindow::processStream() {
         auto &&img = depth.img->To(ImageFormat::COLOR_RGB);
         QImage image(img->data(), img->width(), img->height(),
                      QImage::Format_RGB888);
-        QImage small_img = image.scaledToWidth(right_label_->width());
-        depth_label_->setPixmap(QPixmap::fromImage(small_img));
+        if(depth.img_info->frame_id%3==0){
+             QImage small_img = image.scaledToWidth(right_label_->width());
+            depth_label_->setPixmap(QPixmap::fromImage(small_img));
+
+        }
+
       }
     }
 

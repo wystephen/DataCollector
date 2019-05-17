@@ -16,6 +16,8 @@
 #include <QtSerialPort/QSerialPortInfo>
 
 #include <thread>
+#include <functional>
+//#include <function>
 
 #include <mynteyed/camera.h>
 #include <mynteyed/utils.h>

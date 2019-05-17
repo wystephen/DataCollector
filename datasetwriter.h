@@ -9,6 +9,9 @@
 #include <deque>
 #include <vector>
 
+#include <thread>
+#include <functional>
+
 struct ImuDataBlock {
   double acc[3];
   double gyr[3];
@@ -80,7 +83,7 @@ public:
                          << get_time_now() << ","
                          << exporture_time << "\n";
 
-      return left_img_dir + frame_id_str+".jpg";
+      return left_img_dir + frame_id_str+".bmp";
 
   }
   std::string RecordRightImage(double time_stamp,
@@ -95,7 +98,7 @@ public:
                          << get_time_now() << ","
                          << exporture_time << "\n";
 
-      return right_img_dir+ frame_id_str+".jpg";
+      return right_img_dir+ frame_id_str+".bmp";
 
   }
 
