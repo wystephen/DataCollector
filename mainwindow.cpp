@@ -266,19 +266,21 @@ bool MainWindow::setupDrawImage() {
  */
 void MainWindow::processStream() {
   if (mynt_cam_.HasStreamDataEnabled()) {
+//if(mynt_cam_.IsStreamDataEnabled(ImageType::IMAGE_LEFT_COLOR)
+//&& mynt_cam_.IsStreamDataEnabled(ImageType::IMAGE_RIGHT_COLOR)){
     bool left_ok(false), right_ok(false), depth_ok(false);
     auto &&left = mynt_cam_.GetStreamData(ImageType::IMAGE_LEFT_COLOR);
     auto &&right = mynt_cam_.GetStreamData(ImageType::IMAGE_RIGHT_COLOR);
     auto &&depth = mynt_cam_.GetStreamData(ImageType::IMAGE_DEPTH);
     auto &&datas = mynt_cam_.GetMotionDatas();
 
-    if(!left.img || !right.img
-        || !depth.img){
-//        QMessageBox::InformationBox("not read all image");
-QMessageBox::warning(this,"not readed all image","not read all");
+//    if(!left.img || !right.img
+//        || !depth.img){
+////        QMessageBox::InformationBox("not read all image");
+//        QMessageBox::warning(this,"not readed all image","not read all");
 
 
-    }
+//    }
 
 
     auto write_image = [](QImage  img,
@@ -290,7 +292,6 @@ QMessageBox::warning(this,"not readed all image","not read all");
 
 
     if (left_enabled_) {
-      //      left.img_info->
       if (left.img) {
         left_ok = true;
         auto &&img = left.img->To(ImageFormat::COLOR_RGB);
@@ -303,7 +304,7 @@ QMessageBox::warning(this,"not readed all image","not read all");
                   left.img_info->timestamp, left.img_info->exposure_time,
                   left.img_info->frame_id));
 //          image.save(path_str);
-          std::thread left_thread(&write_image,image,path_str);
+          std::thread left_thread(write_image,image,path_str);
           left_thread.detach();
         }
         if(left.img_info->frame_id%3==0){
@@ -329,6 +330,7 @@ QMessageBox::warning(this,"not readed all image","not read all");
 //          image.save(path_str);
           std::thread right_thread(write_image,image,path_str);
           right_thread.detach();
+
         }
 //        if(right.img_info->frame_id%3==0){
 //            QImage small_img = image.scaledToWidth(right_label_->width());
