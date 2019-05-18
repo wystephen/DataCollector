@@ -130,7 +130,7 @@ void MainWindow::checkSerialStatu() {
 //      ui->text_browser->clear();
       ui->text_browser->append(line_data);
 //      ui->text_browser->setText(line_data);
-      ui->serial_label->setText(line_data);
+//      ui->serial_label->setText(line_data);
       std::cout << "timer block recieved data:" << data_buf << std::endl;
     }
   }

@@ -25,14 +25,41 @@ class MYNTReader : public QThread
 public:
     explicit MYNTReader();
 
+    void stopThread();
+
+    void startWrite(std::string &dir_str);
+
+    void stopWrite();
+
+protected:
+    void run() Q_DECL_OVERRIDE;
+
 private:
     Camera mynt_cam_;
 
     DatasetWriter *writher_ptr_;
 
+
+    /**
+     * @brief selectDevice
+     * Select default device. without other option.
+     * @param dev_info
+     * @return
+     */
     bool selectDevice(DeviceInfo *dev_info);
 
+    QAtomicInt write_flag;
+
+    int left_index=0;
+    int right_index = 0;
+    int depth_index = 0;
+
 signals:
+    void newLeft(QImage *img);
+
+    void newRight(QImage *img);
+
+    void newDepth(QImage *img);
 
 public slots:
 };

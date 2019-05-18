@@ -2,6 +2,10 @@
 
 MYNTEYE_USE_NAMESPACE
 
+
+
+
+
 MYNTReader::MYNTReader(){
     DeviceInfo dev_info;
     bool cam_ok = selectDevice(&dev_info);
@@ -65,4 +69,35 @@ bool MYNTReader::selectDevice(DeviceInfo *dev_info) {
         }
     }
     return false;
+}
+
+
+void MYNTReader::run(){
+    if(mynt_cam_.HasStreamDataEnabled()){
+        auto &&left = mynt_cam_.GetStreamData(ImageType::IMAGE_LEFT_COLOR);
+        auto &&right = mynt_cam_.GetStreamData(ImageType::IMAGE_RIGHT_COLOR);
+        auto &&depth = mynt_cam_.GetStreamData(ImageType::IMAGE_DEPTH);
+
+        auto write_image = [](QImage img,QString path_str){
+            img.save(path_str);
+        };
+
+        if(left.img){
+            auto &&img = left.img->To(ImageFormat::COLOR_RGB);
+
+            left_index+=1;
+            if(left_index%3==0){
+
+            }
+
+
+        }
+
+
+
+    }else{
+        msleep(10);
+    }
+
+
 }
