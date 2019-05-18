@@ -41,7 +41,9 @@ void MainWindow::on_actionMYNTD_triggered() {
 }
 
 void MainWindow::updateLeft(QImage *img) {
+  std::cout << "in slot" << std::endl;
   left_label_->setPixmap(QPixmap::fromImage(*img));
+  std::cout << "out slot" << std::endl;
 }
 
 void MainWindow::on_comboBox_band_currentIndexChanged(const QString &arg1) {
