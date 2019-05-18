@@ -28,11 +28,13 @@ SOURCES += \
         datasetwriter.cpp \
         main.cpp \
         mainwindow.cpp \
+        myntreader.cpp \
         serialbuffer.cpp
 
 HEADERS += \
         datasetwriter.h \
         mainwindow.h \
+        myntreader.h \
         serialbuffer.h
 
 FORMS += \
