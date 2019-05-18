@@ -5,11 +5,15 @@
 
 #include <QThread>
 
+/**
+ * @brief The MYNTReader class
+ * Simply read all stream data and motion information data.
+ */
 class MYNTReader : public QThread
 {
     Q_OBJECT
 public:
-    explicit MYNTReader(QObject *parent = nullptr);
+    explicit MYNTReader();
 
 signals:
 

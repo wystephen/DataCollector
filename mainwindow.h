@@ -44,6 +44,9 @@ private slots:
 
 //  void on_pushButton_2_clicked();
 
+  /**
+   * @brief on_actionMYNTD_triggered
+   */
   void on_actionMYNTD_triggered();
 
   void on_comboBox_band_currentIndexChanged(const QString &arg1);
