@@ -73,6 +73,8 @@ bool MYNTReader::selectDevice(DeviceInfo *dev_info) {
 
 
 void MYNTReader::run(){
+    while(true){
+        std::cout << "started run" << std::endl;
     if(mynt_cam_.HasStreamDataEnabled()){
         auto &&left = mynt_cam_.GetStreamData(ImageType::IMAGE_LEFT_COLOR);
         auto &&right = mynt_cam_.GetStreamData(ImageType::IMAGE_RIGHT_COLOR);
@@ -84,20 +86,24 @@ void MYNTReader::run(){
 
         if(left.img){
             auto &&img = left.img->To(ImageFormat::COLOR_RGB);
+            QImage image(img->data(),
+                         img->width(),
+                         img->height(),
+                         QImage::Format_RGB888);
 
             left_index+=1;
             if(left_index%3==0){
-
+                QImage small_img = image.scaledToWidth(display_width_);
+//                emit newLeft(&small_img);
+                left_index = 0;
             }
 
-
         }
-
-
-
     }else{
         msleep(10);
     }
+   }
+
 
 
 }

@@ -22,6 +22,8 @@
 #include <mynteyed/camera.h>
 #include <mynteyed/utils.h>
 
+#include <myntreader.h>
+
 #include <datasetwriter.h>
 
 MYNTEYE_USE_NAMESPACE
@@ -71,6 +73,8 @@ private slots:
 
   void on_actionStop_Record_triggered();
 
+  void updateLeft(QImage *img);
+
   private:
   Ui::MainWindow *ui;
   QSerialPort serial_port_;
@@ -91,6 +95,9 @@ private slots:
   QLabel *info_label_;
 
   QTimer *cam_timer_;
+
+  MYNTReader *mynt_reader_= nullptr;
+
 
 
   /// FILE SAVE

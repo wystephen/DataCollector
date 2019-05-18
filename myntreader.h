@@ -31,6 +31,16 @@ public:
 
     void stopWrite();
 
+    int getDisplayWidth(){
+        return display_width_;
+    }
+
+    int setDisplayWidth(const int display_width){
+        display_width_ = display_width;
+        return display_width_;
+    }
+
+
 protected:
     void run() Q_DECL_OVERRIDE;
 
@@ -48,11 +58,14 @@ private:
      */
     bool selectDevice(DeviceInfo *dev_info);
 
-    QAtomicInt write_flag;
+    QAtomicInt write_flag=0;
 
     int left_index=0;
     int right_index = 0;
     int depth_index = 0;
+
+    int display_width_ = 200;
+
 
 signals:
     void newLeft(QImage *img);

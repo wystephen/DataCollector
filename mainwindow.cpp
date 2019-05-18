@@ -9,6 +9,7 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow) {
   ui->setupUi(this);
   ui->btn_stop_serial->setEnabled(false);
+  setupDrawImage();
 }
 
 MainWindow::~MainWindow() {
@@ -20,41 +21,27 @@ void MainWindow::on_comboBox_currentTextChanged(const QString &arg1) {
   QString str = arg1;
 }
 
-//void MainWindow::on_pushButton_clicked() {}
+// void MainWindow::on_pushButton_clicked() {}
 
-//void MainWindow::on_pushButton_2_clicked() {}
+// void MainWindow::on_pushButton_2_clicked() {}
 
 void MainWindow::on_actionMYNTD_triggered() {
-  DeviceInfo dev_info;
 
-  bool cam_ok = selectDevice(&dev_info);
-  if (cam_ok) {
-    OpenParams cam_params(dev_info.index);
+  mynt_reader_ = new MYNTReader();
 
-    cam_params.framerate = 20;
-    cam_params.stream_mode = StreamMode::STREAM_2560x720;
+  //    connect(
+  //        mynt_reader_,
+  //        SIGNAL(MYNTReader::newLeft(QImage*)),
+  //        this,
+  //        SLOT(MainWindow::updateLeft(QImage*)));
+  connect(mynt_reader_, SIGNAL(newLeft(QImage *)), this,
+          SLOT(updateLeft(QImage *)));
 
-    cam_params.color_mode = ColorMode::COLOR_RAW;
-    //        cam_params.depth_mode = DepthMode::DEPTH_GRAY;
-    cam_params.depth_mode = DepthMode::DEPTH_COLORFUL;
+  mynt_reader_->start();
+}
 
-    cam_params.ir_depth_only = false;
-
-    cam_params.ir_intensity = 0; // close IR
-
-    mynt_cam_.EnableImageInfo(true);
-    mynt_cam_.EnableMotionDatas();
-    mynt_cam_.Open(cam_params);
-
-    if (mynt_cam_.IsOpened()) {
-
-      // save sensor parameters.
-
-      // TODO: here
-      // start display
-      setupDrawImage();
-    }
-  }
+void MainWindow::updateLeft(QImage *img) {
+  left_label_->setPixmap(QPixmap::fromImage(*img));
 }
 
 void MainWindow::on_comboBox_band_currentIndexChanged(const QString &arg1) {
@@ -97,17 +84,17 @@ void MainWindow::on_btn_start_serial_clicked(bool checked) {
     serial_port_.open(QIODevice::ReadOnly);
     //        QMessageBox::information(NULL,"title", "openning serial port");
     if (serial_port_.isOpen()) {
-        serial_port_.setDataTerminalReady(true);
+      serial_port_.setDataTerminalReady(true);
       //            QMessageBox::information(NULL,"title", "opened serial
       //            port");
       connect(&serial_port_, &QSerialPort::readyRead, this,
               &MainWindow::handleReadyRead);
       ui->btn_start_serial->setEnabled(false);
       ui->btn_stop_serial->setEnabled(true);
-//      serial_timer_ = new QTimer(this);
+      //      serial_timer_ = new QTimer(this);
       //            serial_timer_->setInterval(100);
-//      connect(serial_timer_, SIGNAL(timeout()), this, SLOT(checkSerialStatu()));
-//      serial_timer_->start(100);
+      //      connect(serial_timer_, SIGNAL(timeout()), this,
+      //      SLOT(checkSerialStatu())); serial_timer_->start(100);
     } else {
       QMessageBox::information(nullptr, "SerialPortError",
                                "UWB serial port open failed");
@@ -127,10 +114,10 @@ void MainWindow::checkSerialStatu() {
 
     if (len > 0) {
       QString line_data(data_buf);
-//      ui->text_browser->clear();
+      //      ui->text_browser->clear();
       ui->text_browser->append(line_data);
-//      ui->text_browser->setText(line_data);
-//      ui->serial_label->setText(line_data);
+      //      ui->text_browser->setText(line_data);
+      //      ui->serial_label->setText(line_data);
       std::cout << "timer block recieved data:" << data_buf << std::endl;
     }
   }
@@ -154,27 +141,27 @@ void MainWindow::on_btn_stop_serial_clicked() {
  * Read one line of UWB observation. And process it.
  */
 void MainWindow::handleReadyRead() {
-    std::cout << "start handle ready read" << std::endl;
-    char data_buf[1000];// = new char[1000];
-    while (serial_port_.canReadLine()) {
-//        memset(data_b/*u*/f,10000,sizeof(char)*10000);
-      auto len = serial_port_.readLine(data_buf, 1000);
-      if (len > 0 && len < 1000) {
-        QString line_data(data_buf);
-        //            ui->text_browser->clear();
-        ui->text_browser->append(line_data);
-        //    ui->text_browser->setText(line_data);
-        //    ui->serial_label->setText(line_data);
-//        std::cout << "recieved data:" << data_buf << std::endl;
+  std::cout << "start handle ready read" << std::endl;
+  char data_buf[1000]; // = new char[1000];
+  while (serial_port_.canReadLine()) {
+    //        memset(data_b/*u*/f,10000,sizeof(char)*10000);
+    auto len = serial_port_.readLine(data_buf, 1000);
+    if (len > 0 && len < 1000) {
+      QString line_data(data_buf);
+      //            ui->text_browser->clear();
+      ui->text_browser->append(line_data);
+      //    ui->text_browser->setText(line_data);
+      //    ui->serial_label->setText(line_data);
+      //        std::cout << "recieved data:" << data_buf << std::endl;
 
-      } else {
-        std::cout << "some error happend" << std::endl;
-        break;
-      }
+    } else {
+      std::cout << "some error happend" << std::endl;
+      break;
     }
-//    delete []data_buf;
-    serial_port_.clearError();
-    std::cout << "end handle ready read" << std::endl;
+  }
+  //    delete []data_buf;
+  serial_port_.clearError();
+  std::cout << "end handle ready read" << std::endl;
 }
 
 bool MainWindow::selectDevice(DeviceInfo *dev_info) {
@@ -234,28 +221,20 @@ bool MainWindow::setupDrawImage() {
   int width = widget->width() / 3;
   int height = widget->height();
 
-  if (left_enabled_) {
-    left_label_ = new QLabel(widget);
-    left_label_->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-    left_label_->setFixedSize(width, height);
-    layout->addWidget(left_label_, 0, 0);
-  }
-  if (right_enabled_) {
-    right_label_ = new QLabel(widget);
-    right_label_->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-    right_label_->setFixedSize(width, height);
-    layout->addWidget(right_label_, 0, 1);
-  }
-  if (depth_enabled_) {
-    depth_label_ = new QLabel(widget);
-    depth_label_->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-    depth_label_->setFixedSize(width, height);
-    layout->addWidget(depth_label_, 0, 2);
-  }
+  left_label_ = new QLabel(widget);
+  left_label_->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+  left_label_->setFixedSize(width, height);
+  layout->addWidget(left_label_, 0, 0);
 
-  cam_timer_ = new QTimer(this);
-  connect(cam_timer_, SIGNAL(timeout()), this, SLOT(processStream()));
-  cam_timer_->start(5);
+  right_label_ = new QLabel(widget);
+  right_label_->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+  right_label_->setFixedSize(width, height);
+  layout->addWidget(right_label_, 0, 1);
+  depth_label_ = new QLabel(widget);
+  depth_label_->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+  depth_label_->setFixedSize(width, height);
+  layout->addWidget(depth_label_, 0, 2);
+
   return true;
 }
 
@@ -266,30 +245,22 @@ bool MainWindow::setupDrawImage() {
  */
 void MainWindow::processStream() {
   if (mynt_cam_.HasStreamDataEnabled()) {
-//if(mynt_cam_.IsStreamDataEnabled(ImageType::IMAGE_LEFT_COLOR)
-//&& mynt_cam_.IsStreamDataEnabled(ImageType::IMAGE_RIGHT_COLOR)){
+    // if(mynt_cam_.IsStreamDataEnabled(ImageType::IMAGE_LEFT_COLOR)
+    //&& mynt_cam_.IsStreamDataEnabled(ImageType::IMAGE_RIGHT_COLOR)){
     bool left_ok(false), right_ok(false), depth_ok(false);
     auto &&left = mynt_cam_.GetStreamData(ImageType::IMAGE_LEFT_COLOR);
     auto &&right = mynt_cam_.GetStreamData(ImageType::IMAGE_RIGHT_COLOR);
     auto &&depth = mynt_cam_.GetStreamData(ImageType::IMAGE_DEPTH);
     auto &&datas = mynt_cam_.GetMotionDatas();
 
-//    if(!left.img || !right.img
-//        || !depth.img){
-////        QMessageBox::InformationBox("not read all image");
-//        QMessageBox::warning(this,"not readed all image","not read all");
+    //    if(!left.img || !right.img
+    //        || !depth.img){
+    ////        QMessageBox::InformationBox("not read all image");
+    //        QMessageBox::warning(this,"not readed all image","not read all");
 
+    //    }
 
-//    }
-
-
-    auto write_image = [](QImage  img,
-                                   QString path_str){
-        img.save(path_str);
-    };
-
-
-
+    auto write_image = [](QImage img, QString path_str) { img.save(path_str); };
 
     if (left_enabled_) {
       if (left.img) {
@@ -303,13 +274,13 @@ void MainWindow::processStream() {
               QString::fromStdString(writer_ptr_->RecordLeftImage(
                   left.img_info->timestamp, left.img_info->exposure_time,
                   left.img_info->frame_id));
-//          image.save(path_str);
-          std::thread left_thread(write_image,image,path_str);
+          //          image.save(path_str);
+          std::thread left_thread(write_image, image, path_str);
           left_thread.detach();
         }
-        if(left.img_info->frame_id%3==0){
-            QImage small_image = image.scaledToWidth(left_label_->width());
-            left_label_->setPixmap(QPixmap::fromImage(small_image));
+        if (left.img_info->frame_id % 3 == 0) {
+          QImage small_image = image.scaledToWidth(left_label_->width());
+          left_label_->setPixmap(QPixmap::fromImage(small_image));
         }
       }
     }
@@ -327,16 +298,16 @@ void MainWindow::processStream() {
                   right.img_info->timestamp, right.img_info->exposure_time,
                   right.img_info->frame_id));
 
-//          image.save(path_str);
-          std::thread right_thread(write_image,image,path_str);
+          //          image.save(path_str);
+          std::thread right_thread(write_image, image, path_str);
           right_thread.detach();
-
         }
-//        if(right.img_info->frame_id%3==0){
-//            QImage small_img = image.scaledToWidth(right_label_->width());
-//            right_label_->setPixmap(QPixmap::fromImage(small_img));
+        //        if(right.img_info->frame_id%3==0){
+        //            QImage small_img =
+        //            image.scaledToWidth(right_label_->width());
+        //            right_label_->setPixmap(QPixmap::fromImage(small_img));
 
-//        }
+        //        }
       }
     }
     if (depth_enabled_) {
@@ -345,12 +316,10 @@ void MainWindow::processStream() {
         auto &&img = depth.img->To(ImageFormat::COLOR_RGB);
         QImage image(img->data(), img->width(), img->height(),
                      QImage::Format_RGB888);
-        if(depth.img_info->frame_id%3==0){
-             QImage small_img = image.scaledToWidth(right_label_->width());
-            depth_label_->setPixmap(QPixmap::fromImage(small_img));
-
+        if (depth.img_info->frame_id % 3 == 0) {
+          QImage small_img = image.scaledToWidth(right_label_->width());
+          depth_label_->setPixmap(QPixmap::fromImage(small_img));
         }
-
       }
     }
 
