@@ -7,27 +7,7 @@ MYNTEYE_USE_NAMESPACE
 
 
 MYNTReader::MYNTReader(){
-//    DeviceInfo dev_info;
-//    bool cam_ok = selectDevice(&dev_info);
-//    if(cam_ok){
-//        OpenParams cam_params(dev_info.index);
 
-//        cam_params.framerate = 20;
-//        cam_params.stream_mode = StreamMode::STREAM_2560x720;
-
-//        cam_params.color_mode = ColorMode::COLOR_RAW;
-//        //        cam_params.depth_mode = DepthMode::DEPTH_GRAY;
-//        cam_params.depth_mode = DepthMode::DEPTH_COLORFUL;
-
-//        cam_params.ir_depth_only = false;
-
-//        cam_params.ir_intensity = 0; // close IR
-
-//        mynt_cam_.EnableImageInfo(true);
-//        mynt_cam_.EnableMotionDatas();
-//        mynt_cam_.Open(cam_params);
-
-//    }
 }
 
 
@@ -100,6 +80,7 @@ void MYNTReader::run(){
     while(true){
 //        std::cout << "started run" << std::endl;
     if(mynt_cam_.HasStreamDataEnabled()){
+        // try to recieve all data.
         auto &&left = mynt_cam_.GetStreamData(ImageType::IMAGE_LEFT_COLOR);
         auto &&right = mynt_cam_.GetStreamData(ImageType::IMAGE_RIGHT_COLOR);
         auto &&depth = mynt_cam_.GetStreamData(ImageType::IMAGE_DEPTH);
@@ -115,6 +96,17 @@ void MYNTReader::run(){
                          img->width(),
                          img->height(),
                          QImage::Format_RGB888);
+            if(write_flag_==1){
+                auto path_str = QString::fromStdString(writer_ptr_->RecordLeftImage(
+                    left.img_info->timestamp,
+                    left.img_info->exposure_time,
+                    left.img_info->frame_id));
+                std::thread t(write_image,
+                              image,
+                              path_str);
+                t.detach();
+            }
+
 
             left_index+=1;
             if(left_index%4==0){
@@ -132,6 +124,16 @@ void MYNTReader::run(){
                          img->width(),
                          img->height(),
                          QImage::Format_RGB888);
+            if(write_flag_==1){
+                auto path_str = QString::fromStdString(writer_ptr_->RecordRightImage(
+                    right.img_info->timestamp,
+                    right.img_info->exposure_time,
+                    right.img_info->frame_id));
+                std::thread t(write_image,
+                              image,
+                              path_str);
+                t.detach();
+            }
             right_index+=1;
             if(right_index%4==0){
                 QImage small_img = image.scaledToWidth(display_width_);
@@ -160,10 +162,26 @@ void MYNTReader::run(){
             for(auto &&data:datas){
                 if(data.imu->flag==MYNTEYE_IMU_GYRO&&gyr_ptr==nullptr){
                     gyr_ptr = data.imu;
-                }
+                    if(write_flag_==1){
+                     writer_ptr_->RecordGyrData(
+                        gyr_ptr->gyro[0],
+                        gyr_ptr->gyro[1],
+                        gyr_ptr->gyro[2],
+                        gyr_ptr->timestamp);
+
+                    }
+                                    }
                 if(data.imu->flag==MYNTEYE_IMU_ACCEL&&acc_ptr==nullptr){
                     acc_ptr = data.imu;
-                }
+                    if(write_flag_==1){
+                     writer_ptr_->RecordAccData(
+                        acc_ptr->accel[0],
+                        acc_ptr->accel[1],
+                        acc_ptr->accel[2],
+                        acc_ptr->timestamp);
+
+                    }
+                                    }
                 if(acc_ptr&&gyr_ptr){
                     emit newIMU(acc_ptr->accel[0],acc_ptr->accel[1],acc_ptr->accel[2],
                                 gyr_ptr->gyro[0],gyr_ptr->gyro[1],gyr_ptr->gyro[2],
@@ -180,7 +198,23 @@ void MYNTReader::run(){
         msleep(10);
     }
    }
+}
+
+void MYNTReader::startWrite(std::string dir_str){
+    writer_ptr_ =
+        new DatasetWriter(dir_str);
+    write_flag_ = 1;
+}
 
 
+void MYNTReader::stopWrite(){
+    if(writer_ptr_){
+        writer_ptr_->Flush();
+        writer_ptr_->Close();
+        delete writer_ptr_;
+        writer_ptr_ = nullptr;
+        write_flag_ = 0;
+
+    }
 
 }

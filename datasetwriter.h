@@ -83,7 +83,7 @@ public:
                          << get_time_now() << ","
                          << exporture_time << "\n";
 
-      return left_img_dir + frame_id_str+".bmp";
+      return left_img_dir + frame_id_str+".jpg";
 
   }
   std::string RecordRightImage(double time_stamp,
@@ -98,7 +98,7 @@ public:
                          << get_time_now() << ","
                          << exporture_time << "\n";
 
-      return right_img_dir+ frame_id_str+".bmp";
+      return right_img_dir+ frame_id_str+".jpg";
 
   }
 

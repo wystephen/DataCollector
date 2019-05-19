@@ -462,8 +462,10 @@ void MainWindow::on_actionStart_Record_triggered() {
     dir_handle.mkdir("right");
     dir_handle.mkdir("left");
 
-    writer_ptr_ =
-        new DatasetWriter((save_dir + "/" + sub_string + "/").toStdString());
+//    writer_ptr_ =
+//        new DatasetWriter((save_dir + "/" + sub_string + "/").toStdString());
+    mynt_reader_->startWrite((save_dir+"/"
+                              +sub_string+"/").toStdString());
 
     if (writer_ptr_->IsValid()) {
       saving_flag = true;
@@ -482,8 +484,10 @@ void MainWindow::on_actionStop_Record_triggered() {
     // close file handle.
     ui->save_dir_label->setLineWidth(1);
     ui->save_dir_label->setText("STOP SAVING");
+
+    mynt_reader_->stopWrite();
     //
-    writer_ptr_->Close();
-    delete writer_ptr_;
+//    writer_ptr_->Close();
+//    delete writer_ptr_;
   }
 }

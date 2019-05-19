@@ -27,7 +27,7 @@ public:
 
     void stopThread();
 
-    void startWrite(std::string &dir_str);
+    void startWrite(std::string dir_str);
 
     void stopWrite();
 
@@ -47,7 +47,7 @@ protected:
 private:
     Camera mynt_cam_;
 
-    DatasetWriter *writher_ptr_;
+    DatasetWriter *writer_ptr_=nullptr;
 
 
     /**
@@ -58,7 +58,7 @@ private:
      */
     bool selectDevice(DeviceInfo *dev_info);
 
-    QAtomicInt write_flag=0;
+    QAtomicInt write_flag_=0;
 
     int left_index=0;
     int right_index = 0;
