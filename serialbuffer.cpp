@@ -36,25 +36,27 @@ void SerialBuffer::run() {
             //                        std::endl;
 
             //                        out_stream << "empty" << std::endl;
-            std::cout << "out put" << std::endl;
+            //            std::cout << "out put" << std::endl;
 
             // TODO: pre process data.
             auto filter_func = [](QString raw_str) -> QString {
               auto sub_strs = raw_str.split(" ");
-              //              for (auto sub_str : sub_strs) {
-              //                std::cout << sub_str.toStdString() << "\n";
-              //              }
-              if (sub_strs[2] == "@R" && sub_strs[3] != "F1") {
-                std::cout << "right line:" << raw_str.toStdString()
-                          << std::endl;
-              }
-              QString return_str(sub_strs[0]);
-              std::cout << "return str:" << return_str.toStdString()
-                        << std::endl;
-
+              QString return_str(
+                  sub_strs[0].mid(1, sub_strs[0].size() - 2) + "," +
+                  QString::number(get_time_now(), 'g', 20) + ",{" +
+                  sub_strs[4].right(8) + ":"                      // mac
+                  + sub_strs[5] + ","                             // range
+                  + sub_strs[6].remove("\r").remove("\n") + ",}"  // intense
+              );
               return return_str;
             };
-            QString processed_str = filter_func(line_str);
+
+            auto sub_strs = line_str.split(" ");
+            if (sub_strs[2] == "@R" && sub_strs[3] != "F1") {
+              QString processed_str = filter_func(line_str);
+              out_stream << processed_str.toStdString() << std::endl;
+              emit newUWB(processed_str);
+            }
           }
 
           emit newUWB(line_str);
