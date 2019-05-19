@@ -1,79 +1,86 @@
 #include "serialbuffer.h"
 
-SerialBuffer::SerialBuffer(){
+SerialBuffer::SerialBuffer() {}
 
+bool SerialBuffer::setSerialPort(QString port_name, int bund_rate) {
+  serial_port_.setPortName(port_name);
+  serial_port_.setBaudRate(bund_rate);
+
+  serial_port_.open(QIODevice::ReadOnly);
+
+  if (serial_port_.isOpen()) {
+    serial_port_.setDataTerminalReady(true);
+  }
+
+  return serial_port_.isOpen();
 }
 
-bool SerialBuffer::setSerialPort(QString port_name,
-                                 int bund_rate)
-{
-    serial_port_.setPortName(port_name);
-    serial_port_.setBaudRate(bund_rate);
-
-    serial_port_.open(QIODevice::ReadOnly);
-
-    if(serial_port_.isOpen()){
-        serial_port_.setDataTerminalReady(true);
+void SerialBuffer::run() {
+  running_flag_ = 1;
+  char line_buffer[1000];
+  while (true) {
+    if (running_flag_ == 0) {
+      serial_port_.close();
+      return;
     }
 
-    return serial_port_.isOpen();
+    if (serial_port_.isOpen()) {
+      while (serial_port_.canReadLine()) {
+        qint64 len = serial_port_.readLine(line_buffer, 1000);
+        //        std::cout << "len:" << len << std::endl;
+        if (len > 0 && len < 1000) {
+          QString line_str(line_buffer);
+          if (out_flag_ == 1) {
+            //                                    out_stream <<
+            //                                    line_str.toStdString() <<
+            //                        std::endl;
 
-}
+            //                        out_stream << "empty" << std::endl;
+            std::cout << "out put" << std::endl;
 
-void SerialBuffer::run(){
-    running_flag_  = 1;
-    char line_buffer[1000];
-    while(true){
-        if(running_flag_==0){
-            serial_port_.close();
-            return;
+            // TODO: pre process data.
+            auto filter_func = [](QString raw_str) -> QString {
+              auto sub_strs = raw_str.split(" ");
+              //              for (auto sub_str : sub_strs) {
+              //                std::cout << sub_str.toStdString() << "\n";
+              //              }
+              if (sub_strs[2] == "@R" && sub_strs[3] != "F1") {
+                std::cout << "right line:" << raw_str.toStdString()
+                          << std::endl;
+              }
+              QString return_str(sub_strs[0]);
+              std::cout << "return str:" << return_str.toStdString()
+                        << std::endl;
+
+              return return_str;
+            };
+            QString processed_str = filter_func(line_str);
+          }
+
+          emit newUWB(line_str);
         }
+      }
+      msleep(10);
 
-        if(serial_port_.isOpen()){
-            while(serial_port_.canReadLine()){
-
-                qint64 len =
-                    serial_port_.readLine(line_buffer,1000);
-                std::cout<< "len:" << len << std::endl;
-                if(len >0 && len < 1000){
-
-                    QString line_str(line_buffer);
-                    if(out_flag_==1){
-                        out_stream << line_str.toStdString() << std::endl;
-//                        out_stream << "empty" << std::endl;
-                        // TODO: pre process data.
-
-                    }
-
-                    emit newUWB(line_str);
-                }
-
-
-            }
-            msleep(10);
-
-
-        }else{
-            std::cout << "serial port not openned" << std::endl;
-        }
+    } else {
+      std::cout << "serial port not openned" << std::endl;
     }
+  }
 }
 
-bool SerialBuffer::startWrite(std::string file_str){
-    out_stream.open(file_str+"HEAD_UWB.data");
-    if(out_stream.is_open()){
-
+bool SerialBuffer::startWrite(std::string file_str) {
+  out_stream.open(file_str + "HEAD_UWB.data");
+  if (out_stream.is_open()) {
     out_flag_ = 1;
     return true;
-    }else{
-        return false;
-    }
+  } else {
+    return false;
+  }
 }
 
-bool SerialBuffer::stopWrite(){
-    out_stream.flush();
-    out_flag_ = 0;
-    out_stream.close();
-    return true;
-
+bool SerialBuffer::stopWrite() {
+  out_stream.flush();
+  out_flag_ = 0;
+  out_stream.close();
+  return true;
 }
