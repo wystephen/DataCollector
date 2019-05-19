@@ -68,11 +68,15 @@ private:
 
 
 signals:
-    void newLeft(QImage *img);
+    void newLeft(QImage img);
 
-    void newRight(QImage *img);
+    void newRight(QImage img);
 
-    void newDepth(QImage *img);
+    void newDepth(QImage img);
+
+    void newIMU(double acc_x,double acc_y,double acc_z,
+                double gyr_x,double gyr_y, double gyr_z,
+                double time);
 
 public slots:
 };

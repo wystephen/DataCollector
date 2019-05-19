@@ -15,8 +15,8 @@
 #include <QtSerialPort/QSerialPort>
 #include <QtSerialPort/QSerialPortInfo>
 
-#include <thread>
 #include <functional>
+#include <thread>
 //#include <function>
 
 #include <mynteyed/camera.h>
@@ -42,9 +42,9 @@ public:
 private slots:
   void on_comboBox_currentTextChanged(const QString &arg1);
 
-//  void on_pushButton_clicked();
+  //  void on_pushButton_clicked();
 
-//  void on_pushButton_2_clicked();
+  //  void on_pushButton_2_clicked();
 
   /**
    * @brief on_actionMYNTD_triggered
@@ -73,9 +73,16 @@ private slots:
 
   void on_actionStop_Record_triggered();
 
-  void updateLeft(QImage *img);
+  void updateLeft(QImage img);
 
-  private:
+  void updateRight(QImage img);
+
+  void updateDepth(QImage img);
+
+  bool drawImuInfo(double acc_x, double acc_y, double acc_z, double gyr_x,
+                   double gyr_y, double gyr_z, double temp);
+
+private:
   Ui::MainWindow *ui;
   QSerialPort serial_port_;
   QSerialPortInfo serial_info_;
@@ -96,9 +103,7 @@ private slots:
 
   QTimer *cam_timer_;
 
-  MYNTReader *mynt_reader_= nullptr;
-
-
+  MYNTReader *mynt_reader_ = nullptr;
 
   /// FILE SAVE
   QString save_dir = "";
@@ -108,9 +113,6 @@ private slots:
   bool selectDevice(DeviceInfo *dev_info);
 
   bool setupDrawImage();
-
-  bool drawImuInfo(double acc_x, double acc_y, double acc_z, double gyr_x,
-                   double gyr_y, double gyr_z, double temp);
 };
 
 #endif // MAINWINDOW_H

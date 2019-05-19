@@ -21,29 +21,52 @@ void MainWindow::on_comboBox_currentTextChanged(const QString &arg1) {
   QString str = arg1;
 }
 
-// void MainWindow::on_pushButton_clicked() {}
-
-// void MainWindow::on_pushButton_2_clicked() {}
-
 void MainWindow::on_actionMYNTD_triggered() {
 
   mynt_reader_ = new MYNTReader();
+  mynt_reader_->setDisplayWidth(left_label_->width());
 
-  //    connect(
-  //        mynt_reader_,
-  //        SIGNAL(MYNTReader::newLeft(QImage*)),
-  //        this,
-  //        SLOT(MainWindow::updateLeft(QImage*)));
-  connect(mynt_reader_, SIGNAL(newLeft(QImage *)), this,
-          SLOT(updateLeft(QImage *)));
+  // connect display signal.
+  connect(mynt_reader_, SIGNAL(newLeft(QImage )), this,
+          SLOT(updateLeft(QImage )));
+
+  connect(mynt_reader_,
+          SIGNAL(newRight(QImage)),
+          this,
+          SLOT(updateRight(QImage)));
+
+  connect(mynt_reader_,
+          SIGNAL(newDepth(QImage)),
+          this,
+          SLOT(updateDepth(QImage)));
+
+  connect(mynt_reader_,
+          SIGNAL(newIMU(double,double,double,
+                        double,double,double,
+                        double)),
+          this,
+          SLOT(drawImuInfo(double,double,double,
+                           double,double,double,
+                           double))
+          );
 
   mynt_reader_->start();
 }
 
-void MainWindow::updateLeft(QImage *img) {
-  std::cout << "in slot" << std::endl;
-  left_label_->setPixmap(QPixmap::fromImage(*img));
-  std::cout << "out slot" << std::endl;
+/**
+ * @brief MainWindow::updateLeft
+ * @param img
+ */
+void MainWindow::updateLeft(QImage img) {
+  left_label_->setPixmap(QPixmap::fromImage(img));
+}
+
+void MainWindow::updateRight(QImage img){
+    right_label_->setPixmap(QPixmap::fromImage(img));
+}
+
+void MainWindow::updateDepth(QImage img){
+    depth_label_->setPixmap(QPixmap::fromImage(img));
 }
 
 void MainWindow::on_comboBox_band_currentIndexChanged(const QString &arg1) {
