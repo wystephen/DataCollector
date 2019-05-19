@@ -2,9 +2,7 @@
 #define MYNTREADER_H
 
 #include <QObject>
-
 #include <QThread>
-
 #include <QMessageBox>
 
 

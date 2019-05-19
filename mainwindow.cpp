@@ -71,7 +71,7 @@ void MainWindow::updateDepth(QImage img){
 
 void MainWindow::on_comboBox_band_currentIndexChanged(const QString &arg1) {
   QString baud_rate_str = arg1;
-  serial_port_.setBaudRate(baud_rate_str.toInt());
+//  serial_port_.setBaudRate(baud_rate_str.toInt());
 }
 
 /**
@@ -96,7 +96,7 @@ void MainWindow::on_pushButton_3_clicked() {
  */
 void MainWindow::on_comboxBox_portName_currentIndexChanged(
     const QString &arg1) {
-  serial_port_.setPortName(arg1);
+//    port_name_ = arg1;
 }
 
 /**
@@ -105,60 +105,40 @@ void MainWindow::on_comboxBox_portName_currentIndexChanged(
  * @param checked
  */
 void MainWindow::on_btn_start_serial_clicked(bool checked) {
-  if (!serial_port_.isOpen()) {
-    serial_port_.open(QIODevice::ReadOnly);
-    //        QMessageBox::information(NULL,"title", "openning serial port");
-    if (serial_port_.isOpen()) {
-      serial_port_.setDataTerminalReady(true);
-      //            QMessageBox::information(NULL,"title", "opened serial
-      //            port");
-      connect(&serial_port_, &QSerialPort::readyRead, this,
-              &MainWindow::handleReadyRead);
-      ui->btn_start_serial->setEnabled(false);
+
+
+    if(serial_reader_==nullptr){
+        serial_reader_ = new SerialBuffer();
+        serial_reader_->setSerialPort(
+            ui->comboxBox_portName->currentText(),
+            ui->comboBox_band->currentText().toInt());
+        connect(serial_reader_,
+                SIGNAL(newUWB(QString)),
+                this,
+                SLOT(showUWB(QString)));
+
+
+        serial_reader_->start();
+         ui->btn_start_serial->setEnabled(false);
       ui->btn_stop_serial->setEnabled(true);
-      //      serial_timer_ = new QTimer(this);
-      //            serial_timer_->setInterval(100);
-      //      connect(serial_timer_, SIGNAL(timeout()), this,
-      //      SLOT(checkSerialStatu())); serial_timer_->start(100);
-    } else {
-      QMessageBox::information(nullptr, "SerialPortError",
-                               "UWB serial port open failed");
+
     }
-  }
-}
-
-void MainWindow::checkSerialStatu() {
-  if (!(serial_port_.isOpen())) {
-    QMessageBox::information(this, "Serial port error",
-                             "serial port maybe blocked");
-    std::cout << "ERROR of SERIAL PORT" << std::endl;
-
-  } else {
-    char *data_buf = new char[1000];
-    auto len = serial_port_.readLine(data_buf, 1000);
-
-    if (len > 0) {
-      QString line_data(data_buf);
-      //      ui->text_browser->clear();
-      ui->text_browser->append(line_data);
-      //      ui->text_browser->setText(line_data);
-      //      ui->serial_label->setText(line_data);
-      std::cout << "timer block recieved data:" << data_buf << std::endl;
-    }
-  }
 }
 
 void MainWindow::on_btn_stop_serial_clicked() {
-  if (serial_port_.isOpen()) {
-    serial_port_.close();
-  }
   ui->btn_start_serial->setEnabled(true);
   ui->btn_stop_serial->setEnabled(false);
-  if (serial_timer_) {
-    serial_timer_->stop();
-    delete serial_timer_;
-    serial_timer_ = nullptr;
-  }
+  serial_reader_->stopThread();
+  serial_reader_->exit();
+  delete serial_reader_;
+  serial_reader_ = nullptr;
+
+}
+
+void MainWindow::showUWB(QString str){
+//    ui->text_browser->append(QString::fromStdString(str));
+    ui->text_browser->append(str);
+//    std::cout << "get signal" << str.toStdString() << std::endl;
 }
 
 /**
@@ -188,54 +168,11 @@ void MainWindow::handleReadyRead() {
   serial_port_.clearError();
   std::cout << "end handle ready read" << std::endl;
 }
-
-bool MainWindow::selectDevice(DeviceInfo *dev_info) {
-  std::vector<DeviceInfo> dev_infos = mynt_cam_.GetDeviceInfos();
-  std::size_t n = dev_infos.size();
-  if (n <= 0) {
-    QMessageBox::warning(NULL, tr("ERROR"),
-                         tr("No MYNT@ EYE Depth Camera detected"),
-                         QMessageBox::Ok);
-
-    return false;
-  } else {
-    if (n == 1) {
-      *dev_info = dev_infos[0];
-      return true;
-    } else { // > 1
-      QStringList items;
-      for (auto &&info : dev_infos) {
-        items << QString("%1 | %2").arg(info.index).arg(info.name.c_str());
-      }
-
-      bool ok;
-      QString item = QInputDialog::getItem(
-          this, tr("Select"), tr("MYNT® EYE cameras"), items, 0, false, &ok);
-      if (ok) {
-        QStringList parts = item.split("|");
-        if (parts.length() > 0) {
-          QString index = parts[0].trimmed();
-          for (auto &&info : dev_infos) {
-            if (QString::number(info.index) == index) {
-              *dev_info = info;
-              return true;
-            }
-          }
-        }
-      }
-    }
-  }
-  return false;
-}
 /**
  * @brief MainWindow::setupDrawImage
  * @return
  */
 bool MainWindow::setupDrawImage() {
-  left_enabled_ = mynt_cam_.IsStreamDataEnabled(ImageType::IMAGE_LEFT_COLOR);
-  right_enabled_ = mynt_cam_.IsStreamDataEnabled(ImageType::IMAGE_RIGHT_COLOR);
-  depth_enabled_ = mynt_cam_.IsStreamDataEnabled(ImageType::IMAGE_DEPTH);
-
   QWidget *widget = ui->camWidget;
   QGridLayout *layout = new QGridLayout(widget);
 
@@ -261,136 +198,6 @@ bool MainWindow::setupDrawImage() {
   layout->addWidget(depth_label_, 0, 2);
 
   return true;
-}
-
-/**
- * @brief MainWindow::processStream
- * run by timer  (at 100hz).
- * recieve mynt depth camera image and motion data.
- */
-void MainWindow::processStream() {
-  if (mynt_cam_.HasStreamDataEnabled()) {
-    // if(mynt_cam_.IsStreamDataEnabled(ImageType::IMAGE_LEFT_COLOR)
-    //&& mynt_cam_.IsStreamDataEnabled(ImageType::IMAGE_RIGHT_COLOR)){
-    bool left_ok(false), right_ok(false), depth_ok(false);
-    auto &&left = mynt_cam_.GetStreamData(ImageType::IMAGE_LEFT_COLOR);
-    auto &&right = mynt_cam_.GetStreamData(ImageType::IMAGE_RIGHT_COLOR);
-    auto &&depth = mynt_cam_.GetStreamData(ImageType::IMAGE_DEPTH);
-    auto &&datas = mynt_cam_.GetMotionDatas();
-
-    //    if(!left.img || !right.img
-    //        || !depth.img){
-    ////        QMessageBox::InformationBox("not read all image");
-    //        QMessageBox::warning(this,"not readed all image","not read all");
-
-    //    }
-
-    auto write_image = [](QImage img, QString path_str) { img.save(path_str); };
-
-    if (left_enabled_) {
-      if (left.img) {
-        left_ok = true;
-        auto &&img = left.img->To(ImageFormat::COLOR_RGB);
-
-        QImage image(img->data(), img->width(), img->height(),
-                     QImage::Format_RGB888);
-        if (writer_ptr_ && writer_ptr_->IsValid() && saving_flag) {
-          QString path_str =
-              QString::fromStdString(writer_ptr_->RecordLeftImage(
-                  left.img_info->timestamp, left.img_info->exposure_time,
-                  left.img_info->frame_id));
-          //          image.save(path_str);
-          std::thread left_thread(write_image, image, path_str);
-          left_thread.detach();
-        }
-        if (left.img_info->frame_id % 3 == 0) {
-          QImage small_image = image.scaledToWidth(left_label_->width());
-          left_label_->setPixmap(QPixmap::fromImage(small_image));
-        }
-      }
-    }
-    if (right_enabled_) {
-      if (right.img) {
-
-        right_ok = true;
-        auto &&img = right.img->To(ImageFormat::COLOR_RGB);
-        QImage image(img->data(), img->width(), img->height(),
-                     QImage::Format_RGB888);
-
-        if (writer_ptr_ && writer_ptr_->IsValid() && saving_flag) {
-          QString path_str =
-              QString::fromStdString(writer_ptr_->RecordRightImage(
-                  right.img_info->timestamp, right.img_info->exposure_time,
-                  right.img_info->frame_id));
-
-          //          image.save(path_str);
-          std::thread right_thread(write_image, image, path_str);
-          right_thread.detach();
-        }
-        //        if(right.img_info->frame_id%3==0){
-        //            QImage small_img =
-        //            image.scaledToWidth(right_label_->width());
-        //            right_label_->setPixmap(QPixmap::fromImage(small_img));
-
-        //        }
-      }
-    }
-    if (depth_enabled_) {
-      if (depth.img) {
-        depth_ok = true;
-        auto &&img = depth.img->To(ImageFormat::COLOR_RGB);
-        QImage image(img->data(), img->width(), img->height(),
-                     QImage::Format_RGB888);
-        if (depth.img_info->frame_id % 3 == 0) {
-          QImage small_img = image.scaledToWidth(right_label_->width());
-          depth_label_->setPixmap(QPixmap::fromImage(small_img));
-        }
-      }
-    }
-
-    //    if (mynt_cam_.IsMotionDatasEnabled() && left_ok && right_ok) {
-    if (!datas.empty()) {
-      //      std::cout << "collected imu and gyr data:" << datas.size() <<
-      //      std::endl;
-
-      std::shared_ptr<ImuData> accel = nullptr;
-      std::shared_ptr<ImuData> gyro = nullptr;
-      for (auto &&data : datas) {
-        if (!data.imu)
-          continue;
-
-        if (data.imu->flag == MYNTEYE_IMU_ACCEL) {
-          accel = data.imu;
-          if (writer_ptr_ && writer_ptr_->IsValid() && saving_flag) {
-            writer_ptr_->RecordAccData(accel->accel[0], accel->accel[1],
-                                       accel->accel[2], accel->timestamp);
-          }
-        } else if (data.imu->flag == MYNTEYE_IMU_GYRO) {
-          gyro = data.imu;
-          if (writer_ptr_ && writer_ptr_->IsValid() && saving_flag) {
-            writer_ptr_->RecordGyrData(gyro->gyro[0], gyro->gyro[1],
-                                       gyro->gyro[2], gyro->timestamp);
-          }
-        } else {
-          continue;
-        }
-
-        if (accel && gyro) {
-          drawImuInfo(accel->accel[0], accel->accel[1], accel->accel[2],
-                      gyro->gyro[0], gyro->gyro[1], gyro->gyro[2],
-                      accel->timestamp);
-        }
-        //          break;
-      }
-      if (accel && gyro) {
-      }
-    }
-    //    }
-
-    if (writer_ptr_ && writer_ptr_->IsValid() && saving_flag) {
-      writer_ptr_->Flush();
-    }
-  }
 }
 
 /**
@@ -462,19 +269,28 @@ void MainWindow::on_actionStart_Record_triggered() {
     dir_handle.mkdir("right");
     dir_handle.mkdir("left");
 
-//    writer_ptr_ =
-//        new DatasetWriter((save_dir + "/" + sub_string + "/").toStdString());
-    mynt_reader_->startWrite((save_dir+"/"
+    if(mynt_reader_){
+         mynt_reader_->startWrite((save_dir+"/"
                               +sub_string+"/").toStdString());
 
-    if (writer_ptr_->IsValid()) {
+    }
+
+    // if serial port available. start saving , disable stop button.
+    if(serial_reader_){
+        if(serial_reader_->startWrite((save_dir+"/"+sub_string+"/").toStdString()))
+        {
+            std::cout << "started writing in serial buffer" << std::endl;
+            ui->btn_stop_serial->setEnabled(false);
+        }else{
+            QMessageBox::warning(nullptr,
+                                 "start serial record error",
+                                 "failed to create file in serial recorder thread");
+        }
+    }
+
       saving_flag = true;
       ui->save_dir_label->setLineWidth(3);
       ui->save_dir_label->setText("SAVING TO" + save_dir + "/" + sub_string);
-    } else {
-      QMessageBox::warning(nullptr, "Error to saving files",
-                           "writer of dataset create failed");
-    }
   }
 }
 
@@ -485,9 +301,13 @@ void MainWindow::on_actionStop_Record_triggered() {
     ui->save_dir_label->setLineWidth(1);
     ui->save_dir_label->setText("STOP SAVING");
 
-    mynt_reader_->stopWrite();
-    //
-//    writer_ptr_->Close();
-//    delete writer_ptr_;
+    if(mynt_reader_){
+        mynt_reader_->stopWrite();
+    }
+
+    if(serial_reader_){
+        serial_reader_->stopWrite();
+        ui->btn_stop_serial->setEnabled(true);
+    }
   }
 }

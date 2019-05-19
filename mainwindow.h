@@ -26,6 +26,9 @@
 
 #include <datasetwriter.h>
 
+#include <serialbuffer.h>
+//#include <serialreader.h>
+
 MYNTEYE_USE_NAMESPACE
 
 namespace Ui {
@@ -65,9 +68,7 @@ private slots:
 
   void on_btn_stop_serial_clicked();
 
-  void checkSerialStatu();
 
-  void processStream();
 
   void on_actionStart_Record_triggered();
 
@@ -82,19 +83,15 @@ private slots:
   bool drawImuInfo(double acc_x, double acc_y, double acc_z, double gyr_x,
                    double gyr_y, double gyr_z, double temp);
 
+  void showUWB(QString str);
+
 private:
   Ui::MainWindow *ui;
   QSerialPort serial_port_;
   QSerialPortInfo serial_info_;
 
+
   QTimer *serial_timer_ = nullptr;
-
-  /// MYNT CAM
-  MYNTEYE_NAMESPACE::Camera mynt_cam_;
-
-  bool left_enabled_ = false;
-  bool right_enabled_ = false;
-  bool depth_enabled_ = false;
 
   QLabel *left_label_;
   QLabel *right_label_;
@@ -105,12 +102,12 @@ private:
 
   MYNTReader *mynt_reader_ = nullptr;
 
+  SerialBuffer* serial_reader_ = nullptr;
+
   /// FILE SAVE
   QString save_dir = "";
   bool saving_flag = false;
   DatasetWriter *writer_ptr_;
-
-  bool selectDevice(DeviceInfo *dev_info);
 
   bool setupDrawImage();
 };
