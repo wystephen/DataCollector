@@ -31,14 +31,7 @@ void SerialBuffer::run() {
         if (len > 0 && len < 1000) {
           QString line_str(line_buffer);
           if (out_flag_ == 1) {
-            //                                    out_stream <<
-            //                                    line_str.toStdString() <<
-            //                        std::endl;
 
-            //                        out_stream << "empty" << std::endl;
-            //            std::cout << "out put" << std::endl;
-
-            // TODO: pre process data.
             auto filter_func = [](QString raw_str) -> QString {
               auto sub_strs = raw_str.split(" ");
               QString return_str(
