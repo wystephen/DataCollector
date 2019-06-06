@@ -101,8 +101,9 @@ void MYNTReader::run(){
                     left.img_info->timestamp,
                     left.img_info->exposure_time,
                     left.img_info->frame_id));
+                QImage l_img = image.copy();
                 std::thread t(write_image,
-                              image,
+                              l_img,
                               path_str);
                 t.detach();
             }
@@ -129,8 +130,9 @@ void MYNTReader::run(){
                     right.img_info->timestamp,
                     right.img_info->exposure_time,
                     right.img_info->frame_id));
+                QImage r_img = image.copy();
                 std::thread t(write_image,
-                              image,
+                              r_img,
                               path_str);
                 t.detach();
             }

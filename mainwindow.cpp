@@ -129,6 +129,7 @@ void MainWindow::on_btn_stop_serial_clicked() {
   ui->btn_start_serial->setEnabled(true);
   ui->btn_stop_serial->setEnabled(false);
   serial_reader_->stopThread();
+  while(serial_reader_->isRunning()){}
   serial_reader_->exit();
   delete serial_reader_;
   serial_reader_ = nullptr;
@@ -153,11 +154,7 @@ void MainWindow::handleReadyRead() {
     auto len = serial_port_.readLine(data_buf, 1000);
     if (len > 0 && len < 1000) {
       QString line_data(data_buf);
-      //            ui->text_browser->clear();
       ui->text_browser->append(line_data);
-      //    ui->text_browser->setText(line_data);
-      //    ui->serial_label->setText(line_data);
-      //        std::cout << "recieved data:" << data_buf << std::endl;
 
     } else {
       std::cout << "some error happend" << std::endl;

@@ -18,7 +18,7 @@ bool SerialBuffer::setSerialPort(QString port_name, int bund_rate) {
 void SerialBuffer::run() {
   running_flag_ = 1;
   char line_buffer[1000];
-  while (true) {
+  while (running_flag_>0) {
     if (running_flag_ == 0) {
       serial_port_.close();
       return;
@@ -61,6 +61,10 @@ void SerialBuffer::run() {
       std::cout << "serial port not openned" << std::endl;
     }
   }
+
+  serial_port_.close();
+
+
 }
 
 bool SerialBuffer::startWrite(std::string file_str) {
