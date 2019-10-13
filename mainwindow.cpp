@@ -308,3 +308,8 @@ void MainWindow::on_actionStop_Record_triggered() {
     }
   }
 }
+
+void MainWindow::on_btn_start_imu_clicked()
+{
+
+}

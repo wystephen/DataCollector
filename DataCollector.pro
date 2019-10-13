@@ -26,6 +26,7 @@ CONFIG += c++11
 
 SOURCES += \
         datasetwriter.cpp \
+        jy901reader.cpp \
         main.cpp \
         mainwindow.cpp \
         myntreader.cpp \
@@ -33,6 +34,7 @@ SOURCES += \
 
 HEADERS += \
         datasetwriter.h \
+        jy901reader.h \
         mainwindow.h \
         myntreader.h \
         serialbuffer.h

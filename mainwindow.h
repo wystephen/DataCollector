@@ -85,6 +85,8 @@ private slots:
 
   void showUWB(QString str);
 
+  void on_btn_start_imu_clicked();
+
 private:
   Ui::MainWindow *ui;
   QSerialPort serial_port_;

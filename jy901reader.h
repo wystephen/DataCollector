@@ -2,6 +2,16 @@
 #define JY901READER_H
 
 #include <QObject>
+#include <QMessageBox>
+#include <QThread>
+
+#include <QSerialPort>
+#include <QSerialPortInfo>
+
+#include <fstream>
+#include <iostream>
+
+#include <datasetwriter.h>
 
 class JY901Reader : public QObject
 {
