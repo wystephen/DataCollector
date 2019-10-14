@@ -25,6 +25,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 CONFIG += c++11
 
 SOURCES += \
+        JY901.cpp \
         datasetwriter.cpp \
         jy901reader.cpp \
         main.cpp \
@@ -33,6 +34,7 @@ SOURCES += \
         serialbuffer.cpp
 
 HEADERS += \
+        JY901.h \
         datasetwriter.h \
         jy901reader.h \
         mainwindow.h \
