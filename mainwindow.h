@@ -87,6 +87,8 @@ private slots:
 
   void on_btn_start_imu_clicked();
 
+  void on_btn_stop_imu_clicked();
+
 private:
   Ui::MainWindow *ui;
   QSerialPort serial_port_;

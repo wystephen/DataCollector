@@ -312,6 +312,7 @@ void MainWindow::on_actionStop_Record_triggered() {
 void MainWindow::on_btn_start_imu_clicked()
 {
 
+
 }
 
 void MainWindow::on_btn_stop_imu_clicked()
