@@ -15,3 +15,22 @@ bool JY901Reader::setSerialPort(QString port_name, int band_rate){
     return serial_port_.isOpen();
 }
 
+void JY901Reader::run(){
+    running_flag_ = 1;
+    char line_buffer[20];
+    while(running_flag_>0){
+        if(running_flag_==0){
+            serial_port_.close();
+        }
+        if(serial_port_.isOpen()){
+
+        }else{
+           std::cout <<__FILE__ << ":"
+                    << __FUNCTION__ << ":"
+                    << __LINE__ <<":"
+                    << "serial port not openned" << std::endl;
+        }
+    }
+    serial_port_.close();
+
+}
