@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "JY901.h"
 #include "string.h"
 

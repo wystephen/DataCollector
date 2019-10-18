@@ -19,10 +19,10 @@ void SerialBuffer::run() {
   running_flag_ = 1;
   char line_buffer[1000];
   while (running_flag_>0) {
-    if (running_flag_ == 0) {
-      serial_port_.close();
-      return;
-    }
+//    if (running_flag_ == 0) {
+//      serial_port_.close();
+//      return;
+//    }
 
     if (serial_port_.isOpen()) {
       while (serial_port_.canReadLine()) {
@@ -62,8 +62,12 @@ void SerialBuffer::run() {
     }
   }
 
-  serial_port_.close();
+  std::cout << "Stop thread" << std::endl;
+  msleep(1000);
+  if(serial_port_.isOpen())
+      serial_port_.close();
 
+//  this->exit();
 
 }
 

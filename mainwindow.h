@@ -28,6 +28,7 @@
 
 #include <serialbuffer.h>
 //#include <serialreader.h>
+#include <jy901reader.h>
 
 MYNTEYE_USE_NAMESPACE
 
@@ -85,6 +86,8 @@ private slots:
 
   void showUWB(QString str);
 
+  void showIMU(QString str);
+
   void on_btn_start_imu_clicked();
 
   void on_btn_stop_imu_clicked();
@@ -107,6 +110,8 @@ private:
   MYNTReader *mynt_reader_ = nullptr;
 
   SerialBuffer* serial_reader_ = nullptr;
+
+  JY901Reader* imu_reader = nullptr;
 
   /// FILE SAVE
   QString save_dir = "";

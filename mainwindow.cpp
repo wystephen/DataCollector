@@ -85,6 +85,7 @@ void MainWindow::on_pushButton_3_clicked() {
   if (port_info_list.size() > 0) {
     for (auto port : port_info_list) {
       ui->comboxBox_portName->addItem(port.portName());
+      ui->comboxBox_imu_portName->addItem(port.portName());
     }
   }
 }
@@ -285,6 +286,17 @@ void MainWindow::on_actionStart_Record_triggered() {
         }
     }
 
+    if(imu_reader){
+        if(imu_reader->startWrite((save_dir+"/"+sub_string+"/").toStdString())){
+            std::cout << "start wirting in imu reader" << std::endl;
+            ui->btn_stop_imu->setEnabled(false);
+        }else{
+            QMessageBox::warning(nullptr,
+                                 "start imu serial record error",
+                                 "failed to create file in imu record thread");
+        }
+    }
+
       saving_flag = true;
       ui->save_dir_label->setLineWidth(3);
       ui->save_dir_label->setText("SAVING TO" + save_dir + "/" + sub_string);
@@ -306,16 +318,47 @@ void MainWindow::on_actionStop_Record_triggered() {
         serial_reader_->stopWrite();
         ui->btn_stop_serial->setEnabled(true);
     }
+
+    if(imu_reader){
+        imu_reader->stopWrite();
+        ui->btn_stop_imu->setEnabled(true);
+
+    }
   }
 }
 
 void MainWindow::on_btn_start_imu_clicked()
 {
+    if(imu_reader==nullptr){
+        imu_reader = new JY901Reader();
+        imu_reader->setSerialPort(
+                    ui->comboxBox_imu_portName->currentText(),
+                    ui->comboBox_imu_band->currentText().toInt());
+        connect(imu_reader,
+                SIGNAL(newIMU(QString)),
+                this,
+                SLOT(showIMU(QString)));
+        imu_reader->start();
+        ui->btn_start_imu->setEnabled(false);
+        ui->btn_stop_imu->setEnabled(true);
+    }
 
 
 }
 
 void MainWindow::on_btn_stop_imu_clicked()
 {
+    ui->btn_start_imu->setEnabled(true);
+    ui->btn_stop_imu->setEnabled(false);
+    imu_reader->stopThread();
+    while(imu_reader->isRunning()){}
+    imu_reader->exit();
+    delete imu_reader;
+    imu_reader = nullptr;
 
+}
+
+
+void MainWindow::showIMU(QString str){
+    ui->text_browser_imu->append(str);
 }

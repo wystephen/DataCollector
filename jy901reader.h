@@ -21,7 +21,7 @@ public:
 
     bool setSerialPort(QString port_name, int band_rate);
 
-    void stopThread();
+    void stopThread(){running_flag_=0;}
 
     bool startWrite(std::string file_str);
 
