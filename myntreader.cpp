@@ -57,14 +57,21 @@ void MYNTReader::run(){
     DeviceInfo dev_info;
     bool cam_ok = selectDevice(&dev_info);
     if(cam_ok){
+
+
+
         OpenParams cam_params(dev_info.index);
 
-        cam_params.framerate = 20;
+        cam_params.framerate = 30;
         cam_params.stream_mode = StreamMode::STREAM_2560x720;
+//        cam_params.stream_mode = StreamMode::STREAM_MODE_LAST;
+//        cam_params.stream_mode = StreamMode::STREAM_1280x720;
 
         cam_params.color_mode = ColorMode::COLOR_RAW;
         //        cam_params.depth_mode = DepthMode::DEPTH_GRAY;
-        cam_params.depth_mode = DepthMode::DEPTH_COLORFUL;
+//        cam_params.depth_mode = DepthMode::DEPTH_RAW;
+//        cam_params.depth_mode = DepthMode::
+
 
         cam_params.ir_depth_only = false;
 
@@ -73,6 +80,19 @@ void MYNTReader::run(){
         mynt_cam_.EnableImageInfo(true);
         mynt_cam_.EnableMotionDatas();
         mynt_cam_.Open(cam_params);
+
+        /// get Camera intrinsic and imu extrinsic parameters
+        auto imu_extrinsic = mynt_cam_.GetMotionExtrinsics();
+        auto imu_intrinsic = mynt_cam_.GetMotionIntrinsics();
+        auto cam_intrinsic = mynt_cam_.GetStreamIntrinsics(StreamMode::STREAM_2560x720);
+        auto cam_extrinsic = mynt_cam_.GetStreamExtrinsics(StreamMode::STREAM_2560x720);
+
+        std::cout << "2560x720 left intrinsic:\n" << cam_intrinsic.left<<std::endl;
+        std::cout << "2560x720 right intrinsic:\n" << cam_intrinsic.right<<std::endl;
+        std::cout << "2560x720 left to right extrinsic:\n"<< cam_extrinsic<<std::endl;
+        std::cout << "imu intrinsic:\n" << imu_intrinsic<< std::endl;
+        std::cout << "imu extrinsic:\n" << imu_extrinsic << std::endl;
+
 
     }
 
